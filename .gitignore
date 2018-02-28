@@ -1,5 +1,11 @@
 .gradle
 /build/
+.idea
+out
+libs
+*.db
+*.bin
+*.mp4
 
 # Ignore Gradle GUI config
 gradle-app.setting
