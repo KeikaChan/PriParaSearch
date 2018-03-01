@@ -4,16 +4,18 @@ import org.bytedeco.javacv.FFmpegFrameGrabber
 import org.bytedeco.javacv.Java2DFrameConverter
 import java.awt.image.BufferedImage
 import java.io.*
+import java.util.*
 import java.util.zip.GZIPInputStream
 import java.util.zip.GZIPOutputStream
 import javax.imageio.ImageIO
 
 
 fun main(args: Array<String>) {
-//    videoProcessing(File("./"))
+    videoProcessing(File("./"))
 //    var videoHash = loadHashMap(File("./hashdb.bin"))
 //    if (videoHash != null)
 //        save2csv(File("./csv"), videoHash)
+
     loadcsv(File("./csv"))!!.forEach { key, value ->
         println("hash:${String.format("%016X", key)} value:${value}")
     }
@@ -148,6 +150,10 @@ fun save2csv(rootDir: File, videoHash: HashMap<Long, MutableList<String>>) {
     }
 }
 
+/**
+ * TODO: 重複を取り除く処理をひっそり入れる
+ * List(mutableList)は省メモリかつ高速なので変えない
+ */
 fun loadcsv(rootDir: File): HashMap<Long, MutableList<String>> {
     var csvFiles = recursiveSearch(rootDir).filter { file -> nameCheck(file, "csv") }
     var videoHash = HashMap<Long, MutableList<String>>(4000000, 1.0F)

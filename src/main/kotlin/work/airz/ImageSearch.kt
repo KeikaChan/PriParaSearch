@@ -2,7 +2,11 @@ package work.airz
 
 
 import java.awt.image.BufferedImage
+import java.util.HashMap
 
+/**
+ * TODO: こちらでハッシュデータの保持を行ったほうが良いので最終的にこちらにデータ部分も移す
+ */
 class ImageSearch {
     /**
      * ベクトル変換部分
@@ -23,6 +27,127 @@ class ImageSearch {
             p++
         }
         return result
+    }
+
+    /**
+     * 類似画像を取ってくる
+     * @param hash ハッシュデータ
+     * @param level 検索レベル
+     */
+    fun getSimilarImage(hash: Long, level: Int, hashMap: HashMap<Long, MutableList<String>>) {
+        var result: List<String>
+        result = if (level <= 3) {
+            getSimilarHash(hash, level, hashMap)
+        } else {
+            getSimilarHashB(hash, level, hashMap)
+        }
+
+    }
+
+    /**
+     * 類似位置の画像だと普通に場所が被るのでそれを排除します
+     *
+     */
+    fun groupByScene(sceneList: List<String>): List<String> {
+        if (sceneList == null || sceneList.isEmpty()) return listOf() //list の中身　titleId_storyId_frame
+        //実装的にはタイトルIDやストーリーIDは0づめで数字があることが好ましいが、近接フレームを排除するだけなので気にしなくていい
+        val sortedList = sceneList.sorted()
+        var old = sortedList.first()
+        return sortedList.filter {
+            val oldSplitText = old.split("_")
+            val oldTitleId = oldSplitText[0].toInt()
+            val oldStoryId = oldSplitText[1].toInt()
+            val oldFrame = oldSplitText[1].toLong()
+
+            val newSplitText = it.split("_")
+            val newTitleId = newSplitText[0].toInt()
+            val newStoryId = newSplitText[1].toInt()
+            val newFrame = newSplitText[1].toLong()
+
+            newTitleId != oldTitleId || newStoryId != oldStoryId || newFrame - oldFrame > 100
+        }
+    }
+
+    /**
+     * 全探索　Brute force
+     */
+    fun getSimilarHashB(hash: Long, level: Int, hashMap: HashMap<Long, MutableList<String>>): List<String> {
+        var result = mutableListOf<String>()
+        hashMap.filter { populationCount(hash.xor(it.key)) <= level }.forEach { _, value ->
+            result.addAll(value)
+        }
+        return result.toList()
+    }
+
+    fun populationCount(bits: Long): Int {
+        var res: Long = bits.and(6148914691236517205L) + bits.shr(1).and(6148914691236517205L)
+        res = res.and(3689348814741910323L) + res.shr(2).and(3689348814741910323L)
+        res = res.and(1085102592571150095L) + res.shr(4).and(1085102592571150095L)
+        res = res.and(71777214294589695L) + res.shr(8).and(71777214294589695L)
+        res = res.and(281470681808895L) + res.shr(16).and(281470681808895L)
+        res = res.and(4294967295L) + res.shr(32).and(4294967295L)
+        return res.toInt()
+    }
+
+    fun getSimilarHash(hash: Long, level: Int, hashMap: HashMap<Long, MutableList<String>>): List<String> {
+        var p: MutableList<String>?
+        var result = mutableListOf<String>()
+
+        if (level >= 0) { //完全一致
+            p = hashMap[hash]
+            if (p != null && p.size > 0) {
+                result.addAll(p)
+            }
+        }
+
+        if (level >= 1) {
+            for (i in 0 until 64) {
+                p = hashMap[hash.xor(1L.shl(i))]
+                if (p != null && p.size > 0) {
+                    result.addAll(p)
+                }
+            }
+        }
+
+        if (level >= 2) {
+            for (i in 0 until 63) {
+                for (j in i + 1 until 64) {
+                    p = hashMap[hash.xor(1L.shl(i)).xor(1L.shl(j))]
+                    if (p != null && p.size > 0) {
+                        result.addAll(p)
+                    }
+                }
+            }
+        }
+
+        if (level >= 3) {
+            for (i in 0 until 62) {
+                for (j in i + 1 until 63) {
+                    for (k in j + 1 until 64) {
+                        p = hashMap[hash.xor(1L.shl(i)).xor(1L.shl(j)).xor(1L.shl(k))]
+                        if (p != null && p.size > 0) {
+                            result.addAll(p)
+                        }
+                    }
+                }
+            }
+        }
+
+        if (level >= 4) {
+            for (i in 0 until 61) {
+                for (j in i + 1 until 62) {
+                    for (k in j + 1 until 63) {
+                        for (l in k + 1 until 64) {
+                            p = hashMap[hash.xor(1L.shl(i)).xor(1L.shl(j)).xor(1L.shl(k)).xor(1L.shl(l))]
+                            if (p != null && p.size > 0) {
+                                result.addAll(p)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return result.toList()
     }
 
     /**
