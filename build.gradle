@@ -8,16 +8,6 @@ apply plugin: 'javafx-gradle-plugin'
 buildscript {
     ext.kotlin_version = '1.2.20'
 
-    ext.windows_platform = 'windows-x86'
-    ext.windows64_platform = 'windows-x86_64'
-    ext.linux_platform = 'linux-x86'
-    ext.linux64_platform = 'linux-x86_64'
-    ext.linux_arm_platform = 'linux-armhf'
-    ext.linux_ppc64le_platform = 'linux-ppc64le'
-    ext.macos_platform = 'macosx-x86_64'
-    ext.android_platform = 'android-arm'
-    ext.android_x86_platform = 'android-x86'
-
     repositories {
         mavenCentral()
     }
