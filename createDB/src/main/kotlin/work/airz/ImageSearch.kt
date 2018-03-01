@@ -5,11 +5,14 @@ import java.awt.image.BufferedImage
 import java.util.HashMap
 
 /**
- * TODO: こちらでハッシュデータの保持を行ったほうが良いので最終的にこちらにデータ部分も移す
+ * 画像の探索関連をまとめています
+ * @author khrom
  */
 class ImageSearch {
+
     /**
      * ベクトル変換部分
+     * @param bmp 画像データ
      */
     fun getVector(bmp: BufferedImage): Long {
         val data = getSmallImageData(bmp, 9, 8) //最終的に畳み込みして64bitになる
@@ -34,21 +37,20 @@ class ImageSearch {
      * @param hash ハッシュデータ
      * @param level 検索レベル
      */
-    fun getSimilarImage(hash: Long, level: Int, videoHash: HashMap<Long, MutableList<String>>) {
-        var result: List<String>
-        result = if (level <= 3) {
+    fun getSimilarImage(hash: Long, level: Int, videoHash: HashMap<Long, MutableList<String>>): List<String> {
+        var result: List<String> = if (level <= 3) {
             getSimilarHash(hash, level, videoHash)
         } else {
             getSimilarHashB(hash, level, videoHash)
         }
-
+        return groupByScene(result)
     }
 
     /**
      * 類似位置の画像だと普通に場所が被るのでそれを排除します
-     *
+     * @param sceneList 対象のシーン
      */
-    fun groupByScene(sceneList: List<String>): List<String> {
+    private fun groupByScene(sceneList: List<String>): List<String> {
         if (sceneList == null || sceneList.isEmpty()) return listOf() //list の中身　titleId_storyId_frame
         //実装的にはタイトルIDやストーリーIDは0づめで数字があることが好ましいが、近接フレームを排除するだけなので気にしなくていい
         val sortedList = sceneList.sorted()
@@ -70,8 +72,11 @@ class ImageSearch {
 
     /**
      * 全探索　Brute force
+     * @param hash 対象のハッシュ値
+     * @param level 検索レベル
+     * @param videoHash データベースのデータ
      */
-    fun getSimilarHashB(hash: Long, level: Int, videoHash: HashMap<Long, MutableList<String>>): List<String> {
+    private fun getSimilarHashB(hash: Long, level: Int, videoHash: HashMap<Long, MutableList<String>>): List<String> {
         var result = mutableListOf<String>()
         videoHash.filter { populationCount(hash.xor(it.key)) <= level }.forEach { _, value ->
             result.addAll(value)
@@ -79,8 +84,12 @@ class ImageSearch {
         return result.toList()
     }
 
-    fun populationCount(bits: Long): Int {
-        var res: Long = bits.and(6148914691236517205L) + bits.shr(1).and(6148914691236517205L)
+    /**
+     * 1になっているビット数のカウント　ハミング距離のこと
+     * @param hash 対象のハッシュ値
+     */
+    private fun populationCount(hash: Long): Int {
+        var res: Long = hash.and(6148914691236517205L) + hash.shr(1).and(6148914691236517205L)
         res = res.and(3689348814741910323L) + res.shr(2).and(3689348814741910323L)
         res = res.and(1085102592571150095L) + res.shr(4).and(1085102592571150095L)
         res = res.and(71777214294589695L) + res.shr(8).and(71777214294589695L)
@@ -89,7 +98,13 @@ class ImageSearch {
         return res.toInt()
     }
 
-    fun getSimilarHash(hash: Long, level: Int, videoHash: HashMap<Long, MutableList<String>>): List<String> {
+    /**
+     * 類似画像をハミング距離毎に検索を掛けます
+     * @param hash 対象のハッシュ値
+     * @param level 検索レベル
+     * @param videoHash データベースのデータ
+     */
+    private fun getSimilarHash(hash: Long, level: Int, videoHash: HashMap<Long, MutableList<String>>): List<String> {
         var p: MutableList<String>?
         var result = mutableListOf<String>()
 
@@ -152,7 +167,9 @@ class ImageSearch {
 
     /**
      * 画像縮小
-     * TODO: ND4Jを使うかどうかの検討。入れると容量が激増する
+     * @param bmp 画像データ
+     * @param width 画像の幅
+     * @param height 画像の高さ
      */
     private fun getSmallImageData(bmp: BufferedImage, width: Int, height: Int): IntArray {
         val bmp32 = bmp.getRGB(0, 0, bmp.width, bmp.height, null, 0, bmp.width)
