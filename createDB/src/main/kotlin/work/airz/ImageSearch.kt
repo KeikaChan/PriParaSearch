@@ -36,6 +36,7 @@ class ImageSearch {
      * 類似画像を取ってくる
      * @param hash ハッシュデータ
      * @param level 検索レベル
+     * @param videoHash 辞書データ
      */
     fun getSimilarImage(hash: Long, level: Int, videoHash: HashMap<Long, MutableList<String>>): List<String> {
         var result: List<String> = if (level <= 3) {
@@ -51,7 +52,7 @@ class ImageSearch {
      * @param sceneList 対象のシーン
      */
     private fun groupByScene(sceneList: List<String>): List<String> {
-        if (sceneList == null || sceneList.isEmpty()) return listOf() //list の中身　titleId_storyId_frame
+        if (sceneList.isEmpty()) return listOf() //list の中身　titleId_storyId_frame
         //実装的にはタイトルIDやストーリーIDは0づめで数字があることが好ましいが、近接フレームを排除するだけなので気にしなくていい
         val sortedList = sceneList.sorted()
         var old = sortedList.first()
@@ -74,7 +75,7 @@ class ImageSearch {
      * 全探索　Brute force
      * @param hash 対象のハッシュ値
      * @param level 検索レベル
-     * @param videoHash データベースのデータ
+     * @param videoHash 辞書データ
      */
     private fun getSimilarHashB(hash: Long, level: Int, videoHash: HashMap<Long, MutableList<String>>): List<String> {
         var result = mutableListOf<String>()
@@ -102,7 +103,7 @@ class ImageSearch {
      * 類似画像をハミング距離毎に検索を掛けます
      * @param hash 対象のハッシュ値
      * @param level 検索レベル
-     * @param videoHash データベースのデータ
+     * @param videoHash 辞書データ
      */
     private fun getSimilarHash(hash: Long, level: Int, videoHash: HashMap<Long, MutableList<String>>): List<String> {
         var p: MutableList<String>?

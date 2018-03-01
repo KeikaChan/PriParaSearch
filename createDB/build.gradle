@@ -3,7 +3,6 @@ version '1.0-SNAPSHOT'
 
 apply plugin: 'kotlin'
 apply plugin: 'application'
-apply plugin: 'javafx-gradle-plugin'
 
 buildscript {
     ext.kotlin_version = '1.2.20'
@@ -13,7 +12,6 @@ buildscript {
     }
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath "de.dynamicfiles.projects.gradle.plugins:javafx-gradle-plugin:8.8.2"
     }
 }
 
@@ -56,15 +54,10 @@ compileTestKotlin {
     kotlinOptions.jvmTarget = "1.8"
 }
 
-jfx {
-    mainClass = 'work.airz.MainKt'
-    additionalBundlerResources = 'src/main/resources'
-    vendor = 'Khrom'
-}
 
-//jar {
-//    manifest {
-//        attributes 'Main-Class': 'work.airz.MainKt'
-//    }
-//    from configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
-//}
+jar {
+    manifest {
+        attributes 'Main-Class': 'work.airz.MainKt'
+    }
+    from configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+}

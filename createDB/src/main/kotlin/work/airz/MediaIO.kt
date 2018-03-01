@@ -175,6 +175,11 @@ class MediaIO {
     }
 
 
+    /**
+     * 辞書データの書き込み
+     * @param destFile 対象
+     * @param videoHash 辞書データ
+     */
     fun saveHashMap(destFile: File, videoHash: HashMap<Long, MutableList<String>>) {
         destFile.parentFile.mkdirs()
         ObjectOutputStream(GZIPOutputStream(FileOutputStream(destFile))).use {
@@ -182,6 +187,10 @@ class MediaIO {
         }
     }
 
+    /**
+     * 辞書データの読み込み
+     * @param destFile 辞書ファイルの場所
+     */
     fun loadHashMap(destFile: File): HashMap<Long, MutableList<String>>? {
         if (!destFile.exists() || destFile.isDirectory || !destFile.isFile) return null
         var videoHash = HashMap<Long, MutableList<String>>(4000000, 1.0F) //初期化用。後で書き換わる
@@ -194,6 +203,7 @@ class MediaIO {
 
     /**
      * 再帰的ファイル検索
+     * @param rootDir ルートディレクトリ
      */
     fun recursiveSearch(rootDir: File): MutableList<File> {
         var files = rootDir.listFiles()
@@ -209,6 +219,7 @@ class MediaIO {
     /**
      * ファイル名が正しいか確認
      * @param inputFile 確認する対象
+     * @param ext 拡張子
      */
     fun nameCheck(inputFile: File, ext: String): Boolean {
         if (!inputFile.exists() || inputFile.isDirectory) return false //存在確認
@@ -220,8 +231,7 @@ class MediaIO {
 
     /**
      * リスト内の重複排除をします。
-     * メモリを消費したくないので参照の値を使ってそのまま書き換えます。
-     * Kotlinは引数がval扱いなので再宣言とかして可読性落ちることがないのでよく出来てると思った。
+     * @param videoHash 辞書データ
      */
     fun removeDuplication(videoHash: HashMap<Long, MutableList<String>>) {
         videoHash.forEach { key, list -> videoHash[key] = list.toHashSet().toMutableList() }

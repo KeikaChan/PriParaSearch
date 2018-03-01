@@ -1,33 +1,40 @@
 package work.airz
 
-import org.bytedeco.javacv.FFmpegFrameGrabber
-import org.bytedeco.javacv.Java2DFrameConverter
-import java.awt.image.BufferedImage
-import java.io.*
+import com.sun.tools.internal.xjc.Language
+import javafx.application.Application
+import javafx.fxml.FXMLLoader
+import javafx.scene.Parent
+import javafx.scene.Scene
+import javafx.stage.Stage
 import java.util.*
-import java.util.zip.GZIPInputStream
-import java.util.zip.GZIPOutputStream
-import javax.imageio.ImageIO
-import kotlin.collections.HashMap
+import java.util.Locale
 
 
 fun main(args: Array<String>) {
-//    videoProcessing(File("./"))
-//    importJPG(File("./"))!!.forEach { key, value ->
-//        println("hash:${String.format("%016X", key)} value:${value}")
-//    }
-//    var videoHash = loadHashMap(File("./hashdb.bin"))
-//    if (videoHash != null)
-//        exportCSV(File("./csv"), videoHash)
-
-
-//
-//    importCSV(File("./csv"))!!.forEach { key, value ->
-//        println("hash:${String.format("%016X", key)} value:${value}")
-//    }
-    //    saveHashMap(File("./hashdb.bin"), videoHash)
-//    loadHashMap(File("./hashdb.bin"))!!.forEach { key, value ->
-//        println("hash:${String.format("%016X", key)} value:${value}")
-//    }
+    Application.launch(Main::class.java, *args)
 }
 
+class Main : Application() {
+    private val MIN_SCREEN_WIDTH = 480.0
+    private val MIN_SCREEN_HEIGHT = 640.0
+
+    override fun start(primaryStage: Stage?) {
+        var fxmlLoader = FXMLLoader(javaClass.getResource("/layout.fxml"))
+        fxmlLoader.resources = ResourceBundle.getBundle("bundle/Controller")
+
+        var root: Parent = fxmlLoader.load()
+
+        primaryStage!!.title = "PriParaCreator α"
+        var scene = Scene(root, MIN_SCREEN_WIDTH, MIN_SCREEN_HEIGHT)
+        primaryStage.scene = scene
+        primaryStage.minWidth = MIN_SCREEN_WIDTH
+        primaryStage.minHeight = MIN_SCREEN_HEIGHT
+        primaryStage.maxWidth = MIN_SCREEN_WIDTH
+        primaryStage.maxHeight = MIN_SCREEN_HEIGHT
+        var controller: Controller = fxmlLoader.getController()
+        controller.init(primaryStage)
+        primaryStage.show()
+    }
+
+
+}
