@@ -1,4 +1,4 @@
-group 'PriParaSearch'
+group 'PriCreator'
 version '1.0-SNAPSHOT'
 
 apply plugin: 'kotlin'
