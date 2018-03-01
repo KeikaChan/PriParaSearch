@@ -34,12 +34,12 @@ class ImageSearch {
      * @param hash ハッシュデータ
      * @param level 検索レベル
      */
-    fun getSimilarImage(hash: Long, level: Int, hashMap: HashMap<Long, MutableList<String>>) {
+    fun getSimilarImage(hash: Long, level: Int, videoHash: HashMap<Long, MutableList<String>>) {
         var result: List<String>
         result = if (level <= 3) {
-            getSimilarHash(hash, level, hashMap)
+            getSimilarHash(hash, level, videoHash)
         } else {
-            getSimilarHashB(hash, level, hashMap)
+            getSimilarHashB(hash, level, videoHash)
         }
 
     }
@@ -71,9 +71,9 @@ class ImageSearch {
     /**
      * 全探索　Brute force
      */
-    fun getSimilarHashB(hash: Long, level: Int, hashMap: HashMap<Long, MutableList<String>>): List<String> {
+    fun getSimilarHashB(hash: Long, level: Int, videoHash: HashMap<Long, MutableList<String>>): List<String> {
         var result = mutableListOf<String>()
-        hashMap.filter { populationCount(hash.xor(it.key)) <= level }.forEach { _, value ->
+        videoHash.filter { populationCount(hash.xor(it.key)) <= level }.forEach { _, value ->
             result.addAll(value)
         }
         return result.toList()
@@ -89,12 +89,12 @@ class ImageSearch {
         return res.toInt()
     }
 
-    fun getSimilarHash(hash: Long, level: Int, hashMap: HashMap<Long, MutableList<String>>): List<String> {
+    fun getSimilarHash(hash: Long, level: Int, videoHash: HashMap<Long, MutableList<String>>): List<String> {
         var p: MutableList<String>?
         var result = mutableListOf<String>()
 
         if (level >= 0) { //完全一致
-            p = hashMap[hash]
+            p = videoHash[hash]
             if (p != null && p.size > 0) {
                 result.addAll(p)
             }
@@ -102,7 +102,7 @@ class ImageSearch {
 
         if (level >= 1) {
             for (i in 0 until 64) {
-                p = hashMap[hash.xor(1L.shl(i))]
+                p = videoHash[hash.xor(1L.shl(i))]
                 if (p != null && p.size > 0) {
                     result.addAll(p)
                 }
@@ -112,7 +112,7 @@ class ImageSearch {
         if (level >= 2) {
             for (i in 0 until 63) {
                 for (j in i + 1 until 64) {
-                    p = hashMap[hash.xor(1L.shl(i)).xor(1L.shl(j))]
+                    p = videoHash[hash.xor(1L.shl(i)).xor(1L.shl(j))]
                     if (p != null && p.size > 0) {
                         result.addAll(p)
                     }
@@ -124,7 +124,7 @@ class ImageSearch {
             for (i in 0 until 62) {
                 for (j in i + 1 until 63) {
                     for (k in j + 1 until 64) {
-                        p = hashMap[hash.xor(1L.shl(i)).xor(1L.shl(j)).xor(1L.shl(k))]
+                        p = videoHash[hash.xor(1L.shl(i)).xor(1L.shl(j)).xor(1L.shl(k))]
                         if (p != null && p.size > 0) {
                             result.addAll(p)
                         }
@@ -138,7 +138,7 @@ class ImageSearch {
                 for (j in i + 1 until 62) {
                     for (k in j + 1 until 63) {
                         for (l in k + 1 until 64) {
-                            p = hashMap[hash.xor(1L.shl(i)).xor(1L.shl(j)).xor(1L.shl(k)).xor(1L.shl(l))]
+                            p = videoHash[hash.xor(1L.shl(i)).xor(1L.shl(j)).xor(1L.shl(k)).xor(1L.shl(l))]
                             if (p != null && p.size > 0) {
                                 result.addAll(p)
                             }
