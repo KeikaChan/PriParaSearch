@@ -8,17 +8,22 @@ import java.util.*
 import java.util.zip.GZIPInputStream
 import java.util.zip.GZIPOutputStream
 import javax.imageio.ImageIO
+import kotlin.collections.HashMap
 
 
 fun main(args: Array<String>) {
-    videoProcessing(File("./"))
+//    videoProcessing(File("./"))
+    importJPG(File("./"))!!.forEach { key, value ->
+        println("hash:${String.format("%016X", key)} value:${value}")
+    }
 //    var videoHash = loadHashMap(File("./hashdb.bin"))
 //    if (videoHash != null)
 //        save2csv(File("./csv"), videoHash)
 
-    loadcsv(File("./csv"))!!.forEach { key, value ->
-        println("hash:${String.format("%016X", key)} value:${value}")
-    }
+//
+//    importCSV(File("./csv"))!!.forEach { key, value ->
+//        println("hash:${String.format("%016X", key)} value:${value}")
+//    }
 }
 
 /**
@@ -86,13 +91,13 @@ fun recursiveSearch(rootDir: File): MutableList<File> {
 
 /**
  * ファイル名が正しいか確認
- * @param videoFile 確認する対象
+ * @param inputFile 確認する対象
  */
-fun nameCheck(videoFile: File, ext: String): Boolean {
-    if (!videoFile.exists() || videoFile.isDirectory) return false //存在確認
-    if (!videoFile.extension.equals(ext)) return false //拡張子確認
-    if (videoFile.nameWithoutExtension.split("_").size != 2) return false //ファイル名は titleId_storyId (.mp4) という制限
-    if (videoFile.nameWithoutExtension.split("_").any { it.equals("") }) return false //titleId/storyIdに空があってはならない
+fun nameCheck(inputFile: File, ext: String): Boolean {
+    if (!inputFile.exists() || inputFile.isDirectory) return false //存在確認
+    if (!inputFile.extension.equals(ext)) return false //拡張子確認
+    if (inputFile.nameWithoutExtension.split("_").size != 2 && inputFile.nameWithoutExtension.split("_").size != 3) return false //ファイル名は titleId_storyId_frame (.mp4/jpg) という制限
+    if (inputFile.nameWithoutExtension.split("_").any { it.equals("") }) return false //titleId/storyIdに空があってはならない
     return true
 }
 
@@ -150,20 +155,42 @@ fun save2csv(rootDir: File, videoHash: HashMap<Long, MutableList<String>>) {
     }
 }
 
+fun importJPG(rootDir: File): HashMap<Long, MutableList<String>> {
+    var jpgFiles = recursiveSearch(rootDir).filter { file -> nameCheck(file, "jpg") }
+    println("${jpgFiles.size} jpg files are found.")
+//   jpgFiles= jpgFiles.toMutableList().addAll(recursiveSearch(rootDir).filter { file -> nameCheck(file, "jpg") })
+    var videoHash = HashMap<Long, MutableList<String>>(4000000, 1.0F)
+    jpgFiles.forEach { jpgFile ->
+        val jpgData = ImageIO.read(jpgFile) ?: return@forEach
+        val key = ImageSearch().getVector(jpgData)
+        val value = jpgFile.nameWithoutExtension // titleId_storyId_frame
+        val hashListExists = videoHash[key] //あるか確認
+        if (hashListExists != null && hashListExists.isNotEmpty()) {
+            hashListExists.add(value)
+            videoHash[key] = hashListExists
+        } else { //新たなやつだった場合
+            var hashList = mutableListOf<String>()
+            hashList.add(value)
+            videoHash[key] = hashList //新たに追加
+        }
+    }
+    return videoHash
+}
+
 /**
  * TODO: 重複を取り除く処理をひっそり入れる
  * List(mutableList)は省メモリかつ高速なので変えない
  */
-fun loadcsv(rootDir: File): HashMap<Long, MutableList<String>> {
+fun importCSV(rootDir: File): HashMap<Long, MutableList<String>> {
     var csvFiles = recursiveSearch(rootDir).filter { file -> nameCheck(file, "csv") }
     var videoHash = HashMap<Long, MutableList<String>>(4000000, 1.0F)
     csvFiles.forEach { csvFile ->
-        val tId_sId = csvFile.nameWithoutExtension // titleId_storyId
+        val tIDsID = csvFile.nameWithoutExtension // titleId_storyId
         csvFile.readLines().forEach {
             val splittedText = it.split(",") //csvの分割
             //0がハッシュ値,1がフレーム
             val key = splittedText[0].toLong()
-            val value = "${tId_sId}_${splittedText[1]}"
+            val value = "${tIDsID}_${splittedText[1]}"
 
             val hashListExists = videoHash[key] //あるか確認
             if (hashListExists != null && hashListExists.isNotEmpty()) {
