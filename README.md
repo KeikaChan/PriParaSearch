@@ -47,6 +47,18 @@ MP4ファイルから一発でDBを作ったりファイルのマージ機能を
 またバグなどありましたらissue等やPull Requestお願いします。  
 また、アプリアイコンも募集中です。
 
+## ビルド方法  
+JDK8が必要です。linuxはJavaFxのパッケージが別れている可能性ありなので別途導入する必要があります。  
+その他の依存関係はgradleが自動で解決してくれます。  
+それぞれのプロジェクトで  
+`$ gradlew build`  
+でビルド、  
+`$ gradlew run`  
+で実行できます。
+
+
+Windows/Macでしか試していませんが、コードとしてはLinuxでも動作するはずです。
+
 ## 動作画像  
 - 検索画面
 ![search](https://user-images.githubusercontent.com/4639391/36906603-b1f15f3a-1e79-11e8-86d6-e5049916e351.jpg)  
@@ -65,3 +77,6 @@ MP4ファイルから一発でDBを作ったりファイルのマージ機能を
 
 また、動画の変換部分に関しまして、以下のライブラリを用いています
 - [javacv](https://github.com/bytedeco/javacv)
+
+JDKバンドルのネイティブアプリ作成に関して、以下のライブラリを用いています
+- [javafx-gradle-plugin](https://github.com/FibreFoX/javafx-gradle-plugin)
