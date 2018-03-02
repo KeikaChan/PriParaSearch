@@ -56,7 +56,9 @@ class ImageSearch {
         //実装的にはタイトルIDやストーリーIDは0づめで数字があることが好ましいが、近接フレームを排除するだけなので気にしなくていい
         val sortedList = sceneList.sorted()
         var old = sortedList.first()
-        return sortedList.filter {
+        var resultList = mutableListOf(old) //最初は入れておく
+
+        sortedList.forEach {
             val oldSplitText = old.split("_")
             val oldTitleId = oldSplitText[0].toInt()
             val oldStoryId = oldSplitText[1].toInt()
@@ -66,9 +68,10 @@ class ImageSearch {
             val newTitleId = newSplitText[0].toInt()
             val newStoryId = newSplitText[1].toInt()
             val newFrame = newSplitText[1].toLong()
-
-            newTitleId != oldTitleId || newStoryId != oldStoryId || newFrame - oldFrame > 100
+            if (newTitleId != oldTitleId || newStoryId != oldStoryId || newFrame - oldFrame > 100) resultList.add(it) //フレームに開きがあった時に入れる
+            old = it
         }
+        return resultList
     }
 
     /**
