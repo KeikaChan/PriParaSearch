@@ -117,9 +117,6 @@ class Controller : MediaIO() {
                     return@runBlocking
                 }
                 mergeVideoHash2NewVideoHash(oldVideoHash, newVideoHash)
-                if (File(VIDEO_HASH_PATH).exists()) {
-                    File(VIDEO_HASH_PATH).renameTo(File("${VIDEO_HASH_PATH}.old"))
-                }
             }
             updateStatus("merge finished!")
         }
@@ -133,6 +130,9 @@ class Controller : MediaIO() {
         }
         runBlocking {
             updateStatus("saving...")
+            if (File(VIDEO_HASH_PATH).exists()) {
+                File(VIDEO_HASH_PATH).renameTo(File("${VIDEO_HASH_PATH}.old"))
+            }
             saveHashMap(File(VIDEO_HASH_PATH), newVideoHash)
             updateStatus("saved!!")
         }
