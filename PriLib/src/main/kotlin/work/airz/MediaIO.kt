@@ -277,6 +277,18 @@ abstract class MediaIO {
         return
     }
 
+
+    /**
+     * 再生時間取得用
+     */
+    fun getTimeString(frame: Int, frameRate: Double): String {
+        val sec = 1.0 / frameRate * frame
+        return "${String.format("%02d", (sec / 60).toInt())}:${String.format("%02d", (sec % 60).toInt())}"
+    }
+
+    /**
+     * ログ出力用
+     */
     abstract fun updateStatus(log: String)
 
 }
