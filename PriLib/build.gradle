@@ -1,0 +1,58 @@
+buildscript {
+    ext.kotlin_version = '1.2.21'
+    ext.kotlin_coroutines_version = '0.22.3'
+    ext.javacv_platform_version = '1.4'
+
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
+group 'PriLib'
+version '1.0-SNAPSHOT'
+
+apply plugin: 'kotlin'
+apply plugin: 'application'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+    compile "org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlin_coroutines_version"
+    compile("org.bytedeco:javacv-platform:$javacv_platform_version") {
+        exclude group: "org.bytedeco.javacpp-presets", module: "flandmark"
+        exclude group: "org.bytedeco.javacpp-presets", module: "opencv"
+        exclude group: "org.bytedeco.javacpp-presets", module: "flycapture"
+        exclude group: "org.bytedeco.javacpp-presets", module: "libdc1394"
+        exclude group: "org.bytedeco.javacpp-presets", module: "libfreenect"
+        exclude group: "org.bytedeco.javacpp-presets", module: "libfreenect2"
+        exclude group: "org.bytedeco.javacpp-presets", module: "librealsense"
+        exclude group: "org.bytedeco.javacpp-presets", module: "videoinput"
+        exclude group: "org.bytedeco.javacpp-presets", module: "artoolkitplus"
+    }
+    compile fileTree(dir: 'libs', include: '*.jar')
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+compileKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
+compileTestKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
+
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'work.airz.MainKt'
+    }
+    from configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+}

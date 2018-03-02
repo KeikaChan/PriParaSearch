@@ -1,0 +1,3 @@
+rootProject.name = 'PriParaSearch'
+include ':PriParaSearch',':PriLib'
+project(':PriLib').projectDir = new File(settingsDir, '../PriLib')

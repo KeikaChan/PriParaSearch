@@ -1,2 +1,3 @@
-rootProject.name = 'prisearch'
-
+rootProject.name = 'PriCreator'
+include ':PriCreator',':PriLib'
+project(':PriLib').projectDir = new File(settingsDir, '../PriLib')

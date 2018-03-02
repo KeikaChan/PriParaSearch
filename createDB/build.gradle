@@ -36,18 +36,7 @@ tasks.withType(JavaCompile) {
 dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
     compile "org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlin_coroutines_version"
-
-    compile("org.bytedeco:javacv-platform:$javacv_platform_version") {
-        exclude group: "org.bytedeco.javacpp-presets", module: "flandmark"
-        exclude group: "org.bytedeco.javacpp-presets", module: "opencv"
-        exclude group: "org.bytedeco.javacpp-presets", module: "flycapture"
-        exclude group: "org.bytedeco.javacpp-presets", module: "libdc1394"
-        exclude group: "org.bytedeco.javacpp-presets", module: "libfreenect"
-        exclude group: "org.bytedeco.javacpp-presets", module: "libfreenect2"
-        exclude group: "org.bytedeco.javacpp-presets", module: "librealsense"
-        exclude group: "org.bytedeco.javacpp-presets", module: "videoinput"
-        exclude group: "org.bytedeco.javacpp-presets", module: "artoolkitplus"
-    }
+    compile project(':PriLib') //メディア関連
     compile fileTree(dir: 'libs', include: '*.jar')
 }
 
@@ -65,6 +54,7 @@ jar {
     }
     from configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
 }
+
 kotlin {
     experimental {
         coroutines "warn"
