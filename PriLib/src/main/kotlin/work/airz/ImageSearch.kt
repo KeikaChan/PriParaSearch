@@ -13,6 +13,7 @@ class ImageSearch {
     /**
      * ベクトル変換部分
      * @param bmp 画像データ
+     * @return 画像のハッシュデータ
      */
     fun getVector(bmp: BufferedImage): Long {
         val data = getSmallImageData(bmp, 9, 8) //最終的に畳み込みして64bitになる
@@ -37,6 +38,7 @@ class ImageSearch {
      * @param hash ハッシュデータ
      * @param level 検索レベル
      * @param videoHash 辞書データ
+     * @return 似た画像のリスト List(titleId_storyId_frame)
      */
     fun getSimilarImage(hash: Long, level: Int, videoHash: HashMap<Long, MutableList<String>>): List<String> {
         var result: List<String> = if (level <= 3) {
@@ -50,6 +52,7 @@ class ImageSearch {
     /**
      * 類似位置の画像だと普通に場所が被るのでそれを排除します
      * @param sceneList 対象のシーン
+     * @return scene
      */
     private fun groupByScene(sceneList: List<String>): List<String> {
         if (sceneList.isEmpty()) return listOf() //list の中身　titleId_storyId_frame
@@ -75,10 +78,11 @@ class ImageSearch {
     }
 
     /**
-     * 全探索　Brute force
+     * 全探索
      * @param hash 対象のハッシュ値
      * @param level 検索レベル
      * @param videoHash 辞書データ
+     * @return 似た画像のリスト List(titleId_storyId_frame)
      */
     private fun getSimilarHashB(hash: Long, level: Int, videoHash: HashMap<Long, MutableList<String>>): List<String> {
         var result = mutableListOf<String>()
@@ -91,6 +95,7 @@ class ImageSearch {
     /**
      * 1になっているビット数のカウント　ハミング距離のこと
      * @param hash 対象のハッシュ値
+     * @return ハミング距離
      */
     private fun populationCount(hash: Long): Int {
         var res: Long = hash.and(6148914691236517205L) + hash.shr(1).and(6148914691236517205L)
@@ -107,6 +112,7 @@ class ImageSearch {
      * @param hash 対象のハッシュ値
      * @param level 検索レベル
      * @param videoHash 辞書データ
+     * @return 似た画像のリスト List(titleId_storyId_frame)
      */
     private fun getSimilarHash(hash: Long, level: Int, videoHash: HashMap<Long, MutableList<String>>): List<String> {
         var p: MutableList<String>?
@@ -174,6 +180,7 @@ class ImageSearch {
      * @param bmp 画像データ
      * @param width 画像の幅
      * @param height 画像の高さ
+     * @return small image array
      */
     private fun getSmallImageData(bmp: BufferedImage, width: Int, height: Int): IntArray {
         val bmp32 = bmp.getRGB(0, 0, bmp.width, bmp.height, null, 0, bmp.width)

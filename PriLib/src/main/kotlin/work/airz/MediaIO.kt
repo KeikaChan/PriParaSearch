@@ -17,6 +17,8 @@ abstract class MediaIO {
 
     /**
      * 引数のディレクトリから全ての動画ファイルを読み出して処理します
+     * @param rootDir 動画ファイルのrootディレクトリ
+     * @return 辞書データ
      */
     fun videoProcessing(rootDir: File): HashMap<Long, MutableList<String>> {
         if (!rootDir.isDirectory) return hashMapOf()
@@ -47,6 +49,7 @@ abstract class MediaIO {
      * 動画からフレームを抽出してhashを求める
      * ネイティブベースの方がjavaネイティブより3倍くらい高速なのでjavacppベースのものを用いています
      * @param input input video file
+     * @param 辞書データ
      */
     private fun video2Hash(input: File): HashMap<Long, MutableList<String>> {
         var frameGrabber = FFmpegFrameGrabber(input)
@@ -79,7 +82,11 @@ abstract class MediaIO {
         return videoHash
     }
 
-
+    /**
+     * JPGインポート用です
+     * @param rootDir JPGデータのrootディレクトリ
+     * @return 辞書データ
+     */
     fun importJPG(rootDir: File): HashMap<Long, MutableList<String>> {
         var jpgFiles = recursiveSearch(rootDir).filter { file -> nameCheck(file, "jpg") }
         updateStatus("${jpgFiles.size} jpg files are found.")
@@ -110,7 +117,9 @@ abstract class MediaIO {
 
 
     /**
-     *
+     * csvインポート用です
+     * @param rootDir CSVデータのrootディレクトリ
+     * @return 辞書データ
      */
     fun importCSV(rootDir: File): HashMap<Long, MutableList<String>> {
         var csvFiles = recursiveSearch(rootDir).filter { file -> nameCheck(file, "csv") }
@@ -138,6 +147,11 @@ abstract class MediaIO {
         return videoHash
     }
 
+    /**
+     * 辞書データ動詞をインポートしてマージします。
+     * @param rootDir 辞書データのrootディレクトリ
+     * @return 辞書データ
+     */
     fun importDB(rootDir: File): HashMap<Long, MutableList<String>> {
         var dbFiles = recursiveSearch(rootDir).filter { file -> file.extension.equals("db") }
         var videoHash = HashMap<Long, MutableList<String>>(4000000, 1.0F)
@@ -150,6 +164,9 @@ abstract class MediaIO {
 
     /**
      * videoのハッシュを書き出します。
+     * @param rootDir 出力先rootディレクトリ
+     * @param videoHash 動画の辞書データ
+     * @return 辞書データ
      */
     fun exportCSV(rootDir: File, videoHash: HashMap<Long, MutableList<String>>) {
         rootDir.mkdirs()
@@ -174,11 +191,13 @@ abstract class MediaIO {
 
 
     /**
-     * 入力動画名をベースにフレームを保存します
+     * 入力動画名をベースにフレームを保存します。
+     *
      * @param input 動画ファイル名
      * @param rootDir 出力先rootディレクトリ
      * @param bufferedImage 画像データ
      * @param frameNumber 画像のフレーム番号
+     * @return 保存がうまくいったか　true:success false:error
      */
     fun save2jpg(input: File, rootDir: File, bufferedImage: BufferedImage, frameNumber: Int): Boolean {
         if (!(rootDir.exists() && rootDir.isDirectory)) rootDir.mkdirs() //ディレクトリ作成
@@ -209,6 +228,7 @@ abstract class MediaIO {
     /**
      * 辞書データの読み込み
      * @param destFile 辞書ファイルの場所
+     * @param 辞書データ
      */
     fun loadHashMap(destFile: File): HashMap<Long, MutableList<String>>? {
         if (!destFile.exists() || destFile.isDirectory || !destFile.isFile) return null
@@ -223,6 +243,7 @@ abstract class MediaIO {
     /**
      * 再帰的ファイル検索
      * @param rootDir ルートディレクトリ
+     * @param ファイルの一覧
      */
     fun recursiveSearch(rootDir: File): MutableList<File> {
         var files = rootDir.listFiles()
@@ -239,10 +260,11 @@ abstract class MediaIO {
      * ファイル名が正しいか確認
      * @param inputFile 確認する対象
      * @param ext 拡張子
+     * @return 正しい拡張子か　true:ok false:NOT ok
      */
     private fun nameCheck(inputFile: File, ext: String): Boolean {
         if (!inputFile.exists() || inputFile.isDirectory) return false //存在確認
-        if (!inputFile.extension.equals(ext)) return false //拡張子確認
+        if (!inputFile.extension.toLowerCase().equals(ext)) return false //拡張子確認
         if (inputFile.nameWithoutExtension.split("_").size != 2 && inputFile.nameWithoutExtension.split("_").size != 3) return false //ファイル名は titleId_storyId_frame (.mp4/jpg) という制限
         if (inputFile.nameWithoutExtension.split("_").any { it.equals("") }) return false //titleId/storyIdに空があってはならない
         return true
@@ -279,7 +301,10 @@ abstract class MediaIO {
 
 
     /**
-     * 再生時間取得用
+     * 再生時間を計算し、MM:SSの形式で返します。
+     * @param frame 対象のフレーム
+     * @param frameRate 対象動画のフレームレート
+     * @return 再生時間
      */
     fun getTimeString(frame: Int, frameRate: Double): String {
         val sec = 1.0 / frameRate * frame
@@ -287,7 +312,8 @@ abstract class MediaIO {
     }
 
     /**
-     * ログ出力用
+     * ログ出力用です
+     * @param log 出力したい内容
      */
     abstract fun updateStatus(log: String)
 
