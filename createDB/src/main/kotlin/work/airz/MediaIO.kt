@@ -85,6 +85,7 @@ abstract class MediaIO {
         updateStatus("${jpgFiles.size} jpg files are found.")
 //   jpgFiles= jpgFiles.toMutableList().addAll(recursiveSearch(rootDir).filter { file -> nameCheck(file, "jpg") })
         var videoHash = HashMap<Long, MutableList<String>>(4000000, 1.0F)
+        var count = 1
         jpgFiles.forEach { jpgFile ->
             val jpgData = ImageIO.read(jpgFile) ?: return@forEach
             val key = ImageSearch().getVector(jpgData)
@@ -98,6 +99,10 @@ abstract class MediaIO {
                 hashList.add(value)
                 videoHash[key] = hashList //新たに追加
             }
+            if (count % 1000 == 0) {
+                updateStatus("now ${count}/${jpgFiles.size}")
+            }
+            count++
         }
         removeDuplication(videoHash)
         return videoHash
@@ -105,7 +110,7 @@ abstract class MediaIO {
 
 
     /**
-     * List(mutableList)は省メモリかつ高速なので変えない
+     *
      */
     fun importCSV(rootDir: File): HashMap<Long, MutableList<String>> {
         var csvFiles = recursiveSearch(rootDir).filter { file -> nameCheck(file, "csv") }
@@ -145,18 +150,25 @@ abstract class MediaIO {
 
     /**
      * videoのハッシュを書き出します。
-     * TODO:めっちゃ遅いのでなんとかする
      */
     fun exportCSV(rootDir: File, videoHash: HashMap<Long, MutableList<String>>) {
         rootDir.mkdirs()
+        //出力用のHashMapを作る
+        var destMap = hashMapOf<String, String>() //ファイル名(titleId_storyId) | ハッシュ値とフレーム数のペアのリストをStringにしたもの
         videoHash.forEach { key, value ->
-            //ファイル形式 value:　titleId_storyId_frame
             value.forEach {
+                //it:　titleId_storyId_frame
                 var splittedValue = it.split("_")
-                var outputFile = File(rootDir, "${splittedValue[0]}_${splittedValue[1]}.csv") //出力先の作成
-                if (!outputFile.parentFile.exists()) outputFile.parentFile.mkdirs() //出力先がない場合に作成する
-                outputFile.appendText("${key},${splittedValue[2]}\n")
+                var dest = destMap["${splittedValue[0]}_${splittedValue[1]}"] ?: "" //参照の値がdestに渡されていることに注意。実際のデータではない
+                dest += "${key}_${splittedValue[2]}\n" //追加 一回の書き込みで済むようにまとめてる
+                destMap["${splittedValue[0]},${splittedValue[1]}"] = dest
             }
+        }
+        destMap.forEach { key, value ->
+            //keyがファイル名、valueがハッシュ値とフレーム
+            var outputFile = File(rootDir, "${key}.csv")
+            if (!outputFile.parentFile.exists()) outputFile.parentFile.mkdirs() //出力先がない場合に作成する
+            outputFile.appendText(value)
         }
     }
 

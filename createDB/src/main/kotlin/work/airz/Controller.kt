@@ -1,17 +1,13 @@
 package work.airz
 
-import javafx.application.Platform
 import javafx.event.ActionEvent
 import javafx.fxml.FXML
 import javafx.scene.control.*
 import javafx.scene.input.DragEvent
-import javafx.scene.input.Dragboard
 import javafx.scene.input.TransferMode
 import javafx.stage.Stage
 import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.RendezvousChannel
 import java.io.File
-import netscape.javascript.JSObject.getWindow
 import javafx.stage.DirectoryChooser
 
 
