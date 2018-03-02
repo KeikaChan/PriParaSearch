@@ -12,18 +12,19 @@ import javax.imageio.ImageIO
  * 画像/動画/hashmap保存系の処理を行います
  * @author khrom
  */
-class MediaIO {
-
+abstract class MediaIO {
+    val VIDEO_HASH_PATH = System.getProperty("user.dir") + File.separator + "index.db"
 
     /**
      * 引数のディレクトリから全ての動画ファイルを読み出して処理します
      */
-    fun videoProcessing(rootDir: File) {
-        if (!rootDir.isDirectory) return
+    fun videoProcessing(rootDir: File): HashMap<Long, MutableList<String>> {
+        if (!rootDir.isDirectory) return hashMapOf()
         var videoHash = HashMap<Long, MutableList<String>>(4000000, 1.0F) //100話分くらいだったらこれくらいかと(要検証)
 
         var fileList = recursiveSearch(rootDir).filter { file -> nameCheck(file, "mp4") }
-        println("${fileList.size} video files are found.")
+
+        updateStatus("${fileList.size} video files are found.")
         fileList.forEach {
             var miniVideoHash = video2Hash(it)
             miniVideoHash.forEach { key, value ->
@@ -38,9 +39,7 @@ class MediaIO {
                 }
             }
         }
-        videoHash.forEach { key, value ->
-            println("hash:${String.format("%016X", key)} value:${value}")
-        }
+        return videoHash
     }
 
 
@@ -53,9 +52,9 @@ class MediaIO {
         var frameGrabber = FFmpegFrameGrabber(input)
         var converter = Java2DFrameConverter()
         var videoHash = HashMap<Long, MutableList<String>>(400000, 1.0F) //大体30分アニメだと全てかぶらなくてもこれくらい
+        updateStatus("processing:${input.name}")
         frameGrabber.audioChannels = 0
         frameGrabber.start()
-//    var start = System.currentTimeMillis()
         var count = 1
         while (frameGrabber.frameNumber < frameGrabber.lengthInFrames) { //全フレーム抽出
             /**
@@ -63,8 +62,6 @@ class MediaIO {
              * →動画はカウンターを使って分ける
              */
             var bmp = converter.convert(frameGrabber.grabImage())
-//        println("frame:${String.format("%06d", frameGrabber.frameNumber)} hash:${String.format("%016X", ImageSearch().getVector(bmp))}") //for debug
-//        save2jpg(input, File("./jpgout"), bmp, frameGrabber.frameNumber) //savejpg
             val hashListExists = videoHash[ImageSearch().getVector(bmp)] //あるか確認
             if (hashListExists != null && hashListExists.isNotEmpty()) {
                 hashListExists.add(input.nameWithoutExtension + "_" + String.format("%06d", count))
@@ -74,18 +71,18 @@ class MediaIO {
                 hashList.add(input.nameWithoutExtension + "_" + String.format("%06d", count))
                 videoHash[ImageSearch().getVector(bmp)] = hashList //新たに追加
             }
+            if (count % 1000 == 0) {
+                updateStatus("now ${frameGrabber.frameNumber}/${frameGrabber.lengthInFrames - 1}")
+            }
             count++
-//        if (count > 500) break
         }
-//    var end = System.currentTimeMillis()
-//    println("${end - start}[ms]")
         return videoHash
     }
 
 
     fun importJPG(rootDir: File): HashMap<Long, MutableList<String>> {
         var jpgFiles = recursiveSearch(rootDir).filter { file -> nameCheck(file, "jpg") }
-        println("${jpgFiles.size} jpg files are found.")
+        updateStatus("${jpgFiles.size} jpg files are found.")
 //   jpgFiles= jpgFiles.toMutableList().addAll(recursiveSearch(rootDir).filter { file -> nameCheck(file, "jpg") })
         var videoHash = HashMap<Long, MutableList<String>>(4000000, 1.0F)
         jpgFiles.forEach { jpgFile ->
@@ -108,7 +105,6 @@ class MediaIO {
 
 
     /**
-     * TODO: 重複を取り除く処理をひっそり入れる
      * List(mutableList)は省メモリかつ高速なので変えない
      */
     fun importCSV(rootDir: File): HashMap<Long, MutableList<String>> {
@@ -137,8 +133,19 @@ class MediaIO {
         return videoHash
     }
 
+    fun importDB(rootDir: File): HashMap<Long, MutableList<String>> {
+        var dbFiles = recursiveSearch(rootDir).filter { file -> file.extension.equals("db") }
+        var videoHash = HashMap<Long, MutableList<String>>(4000000, 1.0F)
+        dbFiles.forEach {
+            var oldHash = loadHashMap(it) ?: return@forEach
+            mergeVideoHash2NewVideoHash(oldHash, videoHash)
+        }
+        return videoHash
+    }
+
     /**
      * videoのハッシュを書き出します。
+     * TODO:めっちゃ遅いのでなんとかする
      */
     fun exportCSV(rootDir: File, videoHash: HashMap<Long, MutableList<String>>) {
         rootDir.mkdirs()
@@ -221,7 +228,7 @@ class MediaIO {
      * @param inputFile 確認する対象
      * @param ext 拡張子
      */
-    fun nameCheck(inputFile: File, ext: String): Boolean {
+    private fun nameCheck(inputFile: File, ext: String): Boolean {
         if (!inputFile.exists() || inputFile.isDirectory) return false //存在確認
         if (!inputFile.extension.equals(ext)) return false //拡張子確認
         if (inputFile.nameWithoutExtension.split("_").size != 2 && inputFile.nameWithoutExtension.split("_").size != 3) return false //ファイル名は titleId_storyId_frame (.mp4/jpg) という制限
@@ -233,8 +240,31 @@ class MediaIO {
      * リスト内の重複排除をします。
      * @param videoHash 辞書データ
      */
-    fun removeDuplication(videoHash: HashMap<Long, MutableList<String>>) {
+    private fun removeDuplication(videoHash: HashMap<Long, MutableList<String>>) {
         videoHash.forEach { key, list -> videoHash[key] = list.toHashSet().toMutableList() }
     }
+
+    /**
+     * VideoHashをマージします
+     * @param oldVideoHash マージ元　こちらは読み込まれるだけで編集されません
+     * @param newVideoHash マージを行う辞書　こちらにマージ済みデータが入ります
+     */
+    fun mergeVideoHash2NewVideoHash(oldVideoHash: HashMap<Long, MutableList<String>>, newVideoHash: HashMap<Long, MutableList<String>>) {
+        oldVideoHash.forEach { oldKey, oldValue ->
+            newVideoHash[oldKey] = if (newVideoHash[oldKey] == null) { //新しいデータにもし無かったら
+                oldValue
+            } else {//既にあったらまとめて返す
+                var allList = mutableListOf<String>()
+                allList.addAll(oldValue)
+                var newList = newVideoHash[oldKey] ?: mutableListOf() //nullは無いはずだが一応
+                allList.addAll(newList)
+                allList
+            }
+        }
+        removeDuplication(newVideoHash)
+        return
+    }
+
+    abstract fun updateStatus(log: String)
 
 }

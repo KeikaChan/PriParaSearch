@@ -1,18 +1,17 @@
 package work.airz
 
-import com.sun.tools.internal.xjc.Language
 import javafx.application.Application
 import javafx.fxml.FXMLLoader
 import javafx.scene.Parent
 import javafx.scene.Scene
 import javafx.stage.Stage
 import java.util.*
-import java.util.Locale
 
 
 fun main(args: Array<String>) {
     Application.launch(Main::class.java, *args)
 }
+
 
 class Main : Application() {
     private val MIN_SCREEN_WIDTH = 480.0
@@ -23,7 +22,6 @@ class Main : Application() {
         fxmlLoader.resources = ResourceBundle.getBundle("bundle/Controller")
 
         var root: Parent = fxmlLoader.load()
-
         primaryStage!!.title = "PriParaCreator α"
         var scene = Scene(root, MIN_SCREEN_WIDTH, MIN_SCREEN_HEIGHT)
         primaryStage.scene = scene

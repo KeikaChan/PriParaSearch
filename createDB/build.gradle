@@ -6,6 +6,8 @@ apply plugin: 'application'
 
 buildscript {
     ext.kotlin_version = '1.2.30'
+    ext.kotlin_coroutines_version = '0.22.3'
+    ext.javacv_platform_version = '1.4'
 
     repositories {
         mavenCentral()
@@ -33,7 +35,9 @@ tasks.withType(JavaCompile) {
 
 dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
-    compile("org.bytedeco:javacv-platform:1.4"){
+    compile "org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlin_coroutines_version"
+
+    compile("org.bytedeco:javacv-platform:$javacv_platform_version") {
         exclude group: "org.bytedeco.javacpp-presets", module: "flandmark"
         exclude group: "org.bytedeco.javacpp-presets", module: "opencv"
         exclude group: "org.bytedeco.javacpp-presets", module: "flycapture"
@@ -60,4 +64,9 @@ jar {
         attributes 'Main-Class': 'work.airz.MainKt'
     }
     from configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+}
+kotlin {
+    experimental {
+        coroutines "warn"
+    }
 }
