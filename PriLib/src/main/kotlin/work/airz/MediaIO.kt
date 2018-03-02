@@ -160,8 +160,8 @@ abstract class MediaIO {
                 //it:　titleId_storyId_frame
                 var splittedValue = it.split("_")
                 var dest = destMap["${splittedValue[0]}_${splittedValue[1]}"] ?: "" //参照の値がdestに渡されていることに注意。実際のデータではない
-                dest += "${key}_${splittedValue[2]}\n" //追加 一回の書き込みで済むようにまとめてる
-                destMap["${splittedValue[0]},${splittedValue[1]}"] = dest
+                dest += "${key},${splittedValue[2]}\n" //追加 一回の書き込みで済むようにまとめてる
+                destMap["${splittedValue[0]}_${splittedValue[1]}"] = dest
             }
         }
         destMap.forEach { key, value ->
