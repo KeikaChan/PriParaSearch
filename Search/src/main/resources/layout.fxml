@@ -23,7 +23,7 @@
                 <HBox alignment="CENTER_RIGHT" prefHeight="27.0" prefWidth="480.0" spacing="5.0">
                     <children>
                         <Label text="%key.searchLevel"/>
-                        <ChoiceBox fx:id="process" prefHeight="27.0" prefWidth="125.0">
+                        <ChoiceBox onAction="#choiceChanged" fx:id="process" prefHeight="27.0" prefWidth="125.0">
                             <items>
                                 <FXCollections fx:factory="observableArrayList">
                                     <String fx:value="0"/>

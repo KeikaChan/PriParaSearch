@@ -1,6 +1,7 @@
 package work.airz
 
 import javafx.embed.swing.SwingFXUtils
+import javafx.event.ActionEvent
 import javafx.fxml.FXML
 import javafx.fxml.Initializable
 import javafx.scene.control.*
@@ -13,6 +14,7 @@ import java.awt.image.BufferedImage
 import java.net.URL
 import java.util.*
 import javax.imageio.ImageIO
+import kotlin.math.sign
 import kotlin.system.measureTimeMillis
 
 
@@ -32,8 +34,8 @@ class Controller : MediaIO(), Initializable {
     @FXML
     fun handleDropped(event: DragEvent) {
         event.isDropCompleted = if (event.dragboard.hasFiles() && !event.dragboard.files.first().isDirectory) {
-
-            var image = ImageIO.read(File(event.dragboard.files.first().absolutePath)) ?: return
+            droppedImage = File(event.dragboard.files.first().absolutePath)
+            var image = ImageIO.read(droppedImage) ?: return
             ddImage.image = SwingFXUtils.toFXImage(image, null)
             searchScene(image, event.dragboard.files.first().absolutePath)
             true
@@ -43,12 +45,21 @@ class Controller : MediaIO(), Initializable {
 
     }
 
+    @FXML
+    fun choiceChanged(actionEvent: ActionEvent) {
+        if (droppedImage != null) {
+            var image = ImageIO.read(droppedImage) ?: return
+            searchScene(image, droppedImage!!.absolutePath)
+        }
+    }
+
 
     private lateinit var stage: Stage
     private var videoHashMap = hashMapOf<Long, MutableList<String>>()
     private var titleIndex = hashMapOf<String, Pair<Double, String>>()
     private val TITLE_INDEX_PATH = System.getProperty("user.dir") + File.separator + "index.txt"
     private lateinit var resourceBundle: ResourceBundle
+    private var droppedImage: File? = null
 
     override fun initialize(location: URL?, resources: ResourceBundle?) {
         resourceBundle = resources ?: return
@@ -65,14 +76,21 @@ class Controller : MediaIO(), Initializable {
         titleIndex = loadTitleIndex(File(TITLE_INDEX_PATH))
     }
 
+    /**
+     * 検索
+     */
     fun searchScene(image: BufferedImage, imageFilePath: String) {
         var result = listOf<String>()
         val time = measureTimeMillis {
             result = ImageSearch().getSimilarImage(ImageSearch().getVector(image), process.value.toInt(), videoHashMap)
         }
         var display = "${resourceBundle.getString("key.searchedImage")}: ${imageFilePath}\n${resourceBundle.getString("key.searchTime")}: ${time} ms\n\n"
-
-        index2TitlesWithSec(result).forEach { display += "${it}${resourceBundle.getString("key.nearby")}" }
+        val titles = index2TitlesWithSec(result)
+        if (titles.any()) {
+            titles.forEach { display += "${it}${resourceBundle.getString("key.nearby")}\n" }
+        } else {
+            display += resourceBundle.getString("key.notfound")
+        }
         updateStatus(display)
     }
 
@@ -116,5 +134,6 @@ class Controller : MediaIO(), Initializable {
         println(log)
 
     }
+
 
 }

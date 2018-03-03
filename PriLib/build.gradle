@@ -50,9 +50,9 @@ compileTestKotlin {
 }
 
 
-jar {
-    manifest {
-        attributes 'Main-Class': 'work.airz.MainKt'
-    }
-    from configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
-}
+//jar {
+//    manifest {
+//        attributes 'Main-Class': 'work.airz.MainKt'
+//    }
+//    from configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+//}

@@ -22,7 +22,7 @@ class Main : Application() {
         fxmlLoader.resources = ResourceBundle.getBundle("bundle/Controller")
 
         var root: Parent = fxmlLoader.load()
-        primaryStage!!.title = "PriParaSearch α"
+        primaryStage!!.title = "PriParaSearch α ver"
         var scene = Scene(root, MIN_SCREEN_WIDTH, MIN_SCREEN_HEIGHT)
         primaryStage.scene = scene
         primaryStage.minWidth = MIN_SCREEN_WIDTH
