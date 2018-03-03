@@ -55,7 +55,7 @@ class Controller : MediaIO(), Initializable {
 
 
     private lateinit var stage: Stage
-    private var videoHashMap = hashMapOf<Long, MutableList<HashInfo>>()
+    private var videoHashMap = listOf<Pair<Long,MutableList<HashInfo>>>()
     private var titleIndex = hashMapOf<String, Pair<Double, String>>()
     private val TITLE_INDEX_PATH = System.getProperty("user.dir") + File.separator + "index.txt"
     private lateinit var resourceBundle: ResourceBundle
@@ -71,7 +71,7 @@ class Controller : MediaIO(), Initializable {
     fun init(primaryStage: Stage) {
         stage = primaryStage
         process.selectionModel.select(2)
-        videoHashMap = loadHashMap(File(VIDEO_HASH_PATH)) ?: hashMapOf()
+        videoHashMap = loadHashMap(File(VIDEO_HASH_PATH)) ?: listOf<Pair<Long,MutableList<HashInfo>>>()
         logArea.isWrapText = true
         titleIndex = loadTitleIndex(File(TITLE_INDEX_PATH))
     }

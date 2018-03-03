@@ -163,7 +163,7 @@ abstract class MediaIO {
         var videoHash = HashMap<Long, MutableList<HashInfo>>(4000000, 1.0F)
         dbFiles.forEach {
             var oldHash = loadHashMap(it) ?: return@forEach
-            mergeVideoHash2NewVideoHash(oldHash, videoHash)
+            mergeVideoHash2NewVideoHash(list2HashMap(oldHash), videoHash)
         }
         return videoHash
     }
@@ -225,8 +225,8 @@ abstract class MediaIO {
      */
     fun saveHashMap(destFile: File, videoHash: HashMap<Long, MutableList<HashInfo>>) {
         destFile.parentFile.mkdirs()
-        ObjectOutputStream(GZIPOutputStream(FileOutputStream(destFile))).use {
-            it.writeObject(videoHash)
+        ObjectOutputStream(GZIPOutputStream(FileOutputStream(File(destFile.absolutePath)))).use {
+            it.writeObject(hashMap2List(videoHash))
         }
     }
 
@@ -235,13 +235,12 @@ abstract class MediaIO {
      * @param destFile 辞書ファイルの場所
      * @param 辞書データ
      */
-    fun loadHashMap(destFile: File): HashMap<Long, MutableList<HashInfo>>? {
+    fun loadHashMap(destFile: File): List<Pair<Long, MutableList<HashInfo>>>? {
         if (!destFile.exists() || destFile.isDirectory || !destFile.isFile) return null
-        var videoHash = HashMap<Long, MutableList<HashInfo>>(4000000, 1.0F) //初期化用。後で書き換わる
+        var videoHash = listOf<Pair<Long, MutableList<HashInfo>>>() //初期化用。後で書き換わる
         ObjectInputStream(GZIPInputStream(FileInputStream(destFile))).use {
-            videoHash = it.readObject() as HashMap<Long, MutableList<HashInfo>>
+            videoHash = it.readObject() as List<Pair<Long, MutableList<HashInfo>>>
         }
-        removeDuplication(videoHash)
         return videoHash
     }
 
@@ -316,14 +315,31 @@ abstract class MediaIO {
         return "${String.format("%02d", (sec / 60).toInt())}:${String.format("%02d", (sec % 60).toInt())}"
     }
 
-    fun hashMap2List(hashMap: HashMap<Long, MutableList<HashInfo>>): ArrayList<Pair<Long, MutableList<HashInfo>>> {
+    /**
+     * 保存用。
+     * 重複のない辞書データ(HashMap)をリストに変換します。
+     * @param hashMap 辞書データ
+     */
+    fun hashMap2List(hashMap: HashMap<Long, MutableList<HashInfo>>): List<Pair<Long, MutableList<HashInfo>>> {
         var arrayList = ArrayList<Pair<Long, MutableList<HashInfo>>>() //順序つきリストに変更してみる
         hashMap.forEach { key, value ->
             arrayList.add(Pair(key, value))
         }
-        arrayList.sortedWith(compareBy({ it.first })) //どうせ後からソートされるから。
-//        arrayList.binarySearch { compareValues(it.first, 1L) }
-        return arrayList
+        var sortedList = arrayList.sortedWith(compareBy({ it.first })) //どうせ後からソートされるから。
+        return sortedList
+    }
+
+    /**
+     * データマージ用。
+     * リストをHashMapに変換します。
+     * @param hashList list型の辞書データ
+     */
+    fun list2HashMap(hashList: List<Pair<Long, MutableList<HashInfo>>>): HashMap<Long, MutableList<HashInfo>> {
+        var videoHash = HashMap<Long, MutableList<HashInfo>>(4000000, 1.0F)
+        hashList.forEach { (long, list) ->
+            videoHash[long] = list
+        }
+        return videoHash
     }
 
     /**

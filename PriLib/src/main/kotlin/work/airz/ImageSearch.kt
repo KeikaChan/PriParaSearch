@@ -40,7 +40,7 @@ class ImageSearch {
      * @param videoHash 辞書データ
      * @return 似た画像のリスト List(titleId_storyId_frame)
      */
-    fun getSimilarImage(hash: Long, level: Int, videoHash: HashMap<Long, MutableList<HashInfo>>): List<HashInfo> {
+    fun getSimilarImage(hash: Long, level: Int, videoHash: List<Pair<Long, MutableList<HashInfo>>>): List<HashInfo> {
         var result: List<HashInfo> = if (level <= 3) {
             getSimilarHash(hash, level, videoHash)
         } else {
@@ -75,9 +75,9 @@ class ImageSearch {
      * @param videoHash 辞書データ
      * @return 似た画像のリスト List(titleId_storyId_frame)
      */
-    private fun getSimilarHashB(hash: Long, level: Int, videoHash: HashMap<Long, MutableList<HashInfo>>): List<HashInfo> {
+    private fun getSimilarHashB(hash: Long, level: Int, videoHash: List<Pair<Long, MutableList<HashInfo>>>): List<HashInfo> {
         var result = mutableListOf<HashInfo>()
-        videoHash.filter { populationCount(hash.xor(it.key)) <= level }.forEach { _, value ->
+        videoHash.filter { populationCount(hash.xor(it.first)) <= level }.forEach { (_, value) ->
             result.addAll(value)
         }
         return result.toList()
@@ -98,6 +98,10 @@ class ImageSearch {
         return res.toInt()
     }
 
+    fun comparepair(p1: Long, p2: Long): Int {
+        return (p1 - p2).toInt()
+    }
+
     /**
      * 類似画像をハミング距離毎に検索を掛けます
      * @param hash 対象のハッシュ値
@@ -105,12 +109,16 @@ class ImageSearch {
      * @param videoHash 辞書データ
      * @return 似た画像のリスト List(titleId_storyId_frame)
      */
-    private fun getSimilarHash(hash: Long, level: Int, videoHash: HashMap<Long, MutableList<HashInfo>>): List<HashInfo> {
+    private fun getSimilarHash(hash: Long, level: Int, videoHash: List<Pair<Long, MutableList<HashInfo>>>): List<HashInfo> {
         var p: MutableList<HashInfo>?
         var result = mutableListOf<HashInfo>()
-
         if (level >= 0) { //完全一致
-            p = videoHash[hash]
+            val index = videoHash.binarySearch(0, videoHash.size, { compareValues(it.first, hash) })
+            p = if (index < 0) {
+                null
+            } else {
+                videoHash[index].second
+            }
             if (p != null && p.size > 0) {
                 result.addAll(p)
             }
@@ -118,7 +126,14 @@ class ImageSearch {
 
         if (level >= 1) {
             for (i in 0 until 64) {
-                p = videoHash[hash.xor(1L.shl(i))]
+
+                val index = videoHash.binarySearch(0, videoHash.size, { compareValues(it.first, hash.xor(1L.shl(i))) })
+                p = if (index < 0) {
+                    null
+                } else {
+                    videoHash[index].second
+                }
+
                 if (p != null && p.size > 0) {
                     result.addAll(p)
                 }
@@ -128,7 +143,13 @@ class ImageSearch {
         if (level >= 2) {
             for (i in 0 until 63) {
                 for (j in i + 1 until 64) {
-                    p = videoHash[hash.xor(1L.shl(i)).xor(1L.shl(j))]
+                    val index = videoHash.binarySearch { compareValues(it.first, hash.xor(1L.shl(i)).xor(1L.shl(j))) }
+                    p = if (index < 0) {
+                        null
+                    } else {
+                        videoHash[index].second
+                    }
+
                     if (p != null && p.size > 0) {
                         result.addAll(p)
                     }
@@ -140,7 +161,14 @@ class ImageSearch {
             for (i in 0 until 62) {
                 for (j in i + 1 until 63) {
                     for (k in j + 1 until 64) {
-                        p = videoHash[hash.xor(1L.shl(i)).xor(1L.shl(j)).xor(1L.shl(k))]
+
+                        val index = videoHash.binarySearch(0, videoHash.size, { compareValues(it.first, hash.xor(1L.shl(i)).xor(1L.shl(j)).xor(1L.shl(k))) })
+                        p = if (index < 0) {
+                            null
+                        } else {
+                            videoHash[index].second
+                        }
+
                         if (p != null && p.size > 0) {
                             result.addAll(p)
                         }
@@ -154,7 +182,14 @@ class ImageSearch {
                 for (j in i + 1 until 62) {
                     for (k in j + 1 until 63) {
                         for (l in k + 1 until 64) {
-                            p = videoHash[hash.xor(1L.shl(i)).xor(1L.shl(j)).xor(1L.shl(k)).xor(1L.shl(l))]
+
+                            val index = videoHash.binarySearch(0, videoHash.size, { compareValues(it.first, hash.xor(1L.shl(i)).xor(1L.shl(j)).xor(1L.shl(k)).xor(1L.shl(l))) })
+                            p = if (index < 0) {
+                                null
+                            } else {
+                                videoHash[index].second
+                            }
+
                             if (p != null && p.size > 0) {
                                 result.addAll(p)
                             }
