@@ -16,4 +16,4 @@
 
 
 参考：
-[index.txt](https://github.com/Khromium/PriParaSearch/files/1775960/index.txt)
+[index.txt](https://github.com/Khromium/PriParaSearch/blob/master/Search/index.txt)
