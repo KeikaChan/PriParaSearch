@@ -4,9 +4,11 @@ import org.bytedeco.javacv.FFmpegFrameGrabber
 import org.bytedeco.javacv.Java2DFrameConverter
 import java.awt.image.BufferedImage
 import java.io.*
+import java.util.*
 import java.util.zip.GZIPInputStream
 import java.util.zip.GZIPOutputStream
 import javax.imageio.ImageIO
+import kotlin.collections.ArrayList
 
 /**
  * 画像/動画/hashmap保存系の処理を行います
@@ -20,9 +22,9 @@ abstract class MediaIO {
      * @param rootDir 動画ファイルのrootディレクトリ
      * @return 辞書データ
      */
-    fun videoProcessing(rootDir: File): HashMap<Long, MutableList<String>> {
+    fun videoProcessing(rootDir: File): HashMap<Long, MutableList<HashInfo>> {
         if (!rootDir.isDirectory) return hashMapOf()
-        var videoHash = HashMap<Long, MutableList<String>>(4000000, 1.0F) //100話分くらいだったらこれくらいかと(要検証)
+        var videoHash = HashMap<Long, MutableList<HashInfo>>(4000000, 1.0F) //100話分くらいだったらこれくらいかと(要検証)
 
         var fileList = recursiveSearch(rootDir).filter { file -> nameCheck(file, "mp4") }
 
@@ -30,12 +32,13 @@ abstract class MediaIO {
         fileList.forEach {
             var miniVideoHash = video2Hash(it)
             miniVideoHash.forEach { key, value ->
+                //key:Long, value:MutableList<HashInfo>
                 val hashListExists = videoHash[key] //あるか確認
                 if (hashListExists != null && hashListExists.isNotEmpty()) {
                     hashListExists.addAll(value)
                     videoHash[key] = hashListExists
                 } else { //新たなやつだった場合
-                    var hashList = mutableListOf<String>()
+                    var hashList = mutableListOf<HashInfo>()
                     hashList.addAll(value)
                     videoHash[key] = hashList //新たに追加
                 }
@@ -51,10 +54,10 @@ abstract class MediaIO {
      * @param input input video file
      * @param 辞書データ
      */
-    private fun video2Hash(input: File): HashMap<Long, MutableList<String>> {
+    private fun video2Hash(input: File): HashMap<Long, MutableList<HashInfo>> {
         var frameGrabber = FFmpegFrameGrabber(input)
         var converter = Java2DFrameConverter()
-        var videoHash = HashMap<Long, MutableList<String>>(400000, 1.0F) //大体30分アニメだと全てかぶらなくてもこれくらい
+        var videoHash = HashMap<Long, MutableList<HashInfo>>(400000, 1.0F) //大体30分アニメだと全てかぶらなくてもこれくらい
         updateStatus("processing:${input.name}")
         frameGrabber.audioChannels = 0
         frameGrabber.start()
@@ -65,13 +68,16 @@ abstract class MediaIO {
              * →動画はカウンターを使って分ける
              */
             var bmp = converter.convert(frameGrabber.grabImage())
-            val hashListExists = videoHash[ImageSearch().getVector(bmp)] //あるか確認
+
+            var splittedText = input.nameWithoutExtension.split("_") //ファイル名が titleId_storyIdのため
+            var hashInfo = HashInfo(splittedText[0].toByte(), splittedText[1].toShort(), count)
+
+            val hashListExists = videoHash[ImageSearch().getVector(bmp)] //あるか確認 参照の値を渡している
             if (hashListExists != null && hashListExists.isNotEmpty()) {
-                hashListExists.add(input.nameWithoutExtension + "_" + String.format("%06d", count))
-                videoHash[ImageSearch().getVector(bmp)] = hashListExists
+                hashListExists.add(hashInfo)  //
             } else { //新たなやつだった場合
-                var hashList = mutableListOf<String>()
-                hashList.add(input.nameWithoutExtension + "_" + String.format("%06d", count))
+                var hashList = mutableListOf<HashInfo>()
+                hashList.add(hashInfo)
                 videoHash[ImageSearch().getVector(bmp)] = hashList //新たに追加
             }
             if (count % 1000 == 0) {
@@ -87,23 +93,25 @@ abstract class MediaIO {
      * @param rootDir JPGデータのrootディレクトリ
      * @return 辞書データ
      */
-    fun importJPG(rootDir: File): HashMap<Long, MutableList<String>> {
+    fun importJPG(rootDir: File): HashMap<Long, MutableList<HashInfo>> {
         var jpgFiles = recursiveSearch(rootDir).filter { file -> nameCheck(file, "jpg") }
         updateStatus("${jpgFiles.size} jpg files are found.")
 //   jpgFiles= jpgFiles.toMutableList().addAll(recursiveSearch(rootDir).filter { file -> nameCheck(file, "jpg") })
-        var videoHash = HashMap<Long, MutableList<String>>(4000000, 1.0F)
+        var videoHash = HashMap<Long, MutableList<HashInfo>>(4000000, 1.0F)
         var count = 1
         jpgFiles.forEach { jpgFile ->
             val jpgData = ImageIO.read(jpgFile) ?: return@forEach
             val key = ImageSearch().getVector(jpgData)
-            val value = jpgFile.nameWithoutExtension // titleId_storyId_frame
+
+            var splittedText = jpgFile.nameWithoutExtension.split("_")  //titleId_storyId_frame
+            var hashInfo = HashInfo(splittedText[0].toByte(), splittedText[1].toShort(), splittedText[1].toInt())
+
             val hashListExists = videoHash[key] //あるか確認
             if (hashListExists != null && hashListExists.isNotEmpty()) {
-                hashListExists.add(value)
-                videoHash[key] = hashListExists
+                hashListExists.add(hashInfo)
             } else { //新たなやつだった場合
-                var hashList = mutableListOf<String>()
-                hashList.add(value)
+                var hashList = mutableListOf<HashInfo>()
+                hashList.add(hashInfo)
                 videoHash[key] = hashList //新たに追加
             }
             if (count % 1000 == 0) {
@@ -121,24 +129,22 @@ abstract class MediaIO {
      * @param rootDir CSVデータのrootディレクトリ
      * @return 辞書データ
      */
-    fun importCSV(rootDir: File): HashMap<Long, MutableList<String>> {
+    fun importCSV(rootDir: File): HashMap<Long, MutableList<HashInfo>> {
         var csvFiles = recursiveSearch(rootDir).filter { file -> nameCheck(file, "csv") }
-        var videoHash = HashMap<Long, MutableList<String>>(4000000, 1.0F)
+        var videoHash = HashMap<Long, MutableList<HashInfo>>(4000000, 1.0F)
         csvFiles.forEach { csvFile ->
-            val tIDsID = csvFile.nameWithoutExtension // titleId_storyId
+            val tIDsID = csvFile.nameWithoutExtension.split("_") // titleId_storyId
             csvFile.readLines().forEach {
-                val splittedText = it.split(",") //csvの分割
+                val splittedText = it.split(",") //csvの分割 hash,frame
                 //0がハッシュ値,1がフレーム
                 val key = splittedText[0].toLong()
-                val value = "${tIDsID}_${splittedText[1]}"
-
+                val hashInfo = HashInfo(tIDsID[0].toByte(), tIDsID[1].toShort(), splittedText[1].toInt())
                 val hashListExists = videoHash[key] //あるか確認
                 if (hashListExists != null && hashListExists.isNotEmpty()) {
-                    hashListExists.add(value)
-                    videoHash[key] = hashListExists
+                    hashListExists.add(hashInfo)
                 } else { //新たなやつだった場合
-                    var hashList = mutableListOf<String>()
-                    hashList.add(value)
+                    var hashList = mutableListOf<HashInfo>()
+                    hashList.add(hashInfo)
                     videoHash[key] = hashList //新たに追加
                 }
             }
@@ -152,9 +158,9 @@ abstract class MediaIO {
      * @param rootDir 辞書データのrootディレクトリ
      * @return 辞書データ
      */
-    fun importDB(rootDir: File): HashMap<Long, MutableList<String>> {
+    fun importDB(rootDir: File): HashMap<Long, MutableList<HashInfo>> {
         var dbFiles = recursiveSearch(rootDir).filter { file -> file.extension.equals("db") }
-        var videoHash = HashMap<Long, MutableList<String>>(4000000, 1.0F)
+        var videoHash = HashMap<Long, MutableList<HashInfo>>(4000000, 1.0F)
         dbFiles.forEach {
             var oldHash = loadHashMap(it) ?: return@forEach
             mergeVideoHash2NewVideoHash(oldHash, videoHash)
@@ -168,17 +174,16 @@ abstract class MediaIO {
      * @param videoHash 動画の辞書データ
      * @return 辞書データ
      */
-    fun exportCSV(rootDir: File, videoHash: HashMap<Long, MutableList<String>>) {
+    fun exportCSV(rootDir: File, videoHash: HashMap<Long, MutableList<HashInfo>>) {
         rootDir.mkdirs()
         //出力用のHashMapを作る
         var destMap = hashMapOf<String, String>() //ファイル名(titleId_storyId) | ハッシュ値とフレーム数のペアのリストをStringにしたもの
         videoHash.forEach { key, value ->
             value.forEach {
                 //it:　titleId_storyId_frame
-                var splittedValue = it.split("_")
-                var dest = destMap["${splittedValue[0]}_${splittedValue[1]}"] ?: "" //参照の値がdestに渡されていることに注意。実際のデータではない
-                dest += "${key},${splittedValue[2]}\n" //追加 一回の書き込みで済むようにまとめてる
-                destMap["${splittedValue[0]}_${splittedValue[1]}"] = dest
+                var dest = destMap["${it.titleId}_${it.storyId}"] ?: "" //参照の値がdestに渡されていることに注意。実際のデータではない
+                dest += "${key},${it.frame}\n" //追加 一回の書き込みで済むようにまとめてる
+                destMap["${it.titleId}_${it.storyId}"] = dest
             }
         }
         destMap.forEach { key, value ->
@@ -218,7 +223,7 @@ abstract class MediaIO {
      * @param destFile 対象
      * @param videoHash 辞書データ
      */
-    fun saveHashMap(destFile: File, videoHash: HashMap<Long, MutableList<String>>) {
+    fun saveHashMap(destFile: File, videoHash: HashMap<Long, MutableList<HashInfo>>) {
         destFile.parentFile.mkdirs()
         ObjectOutputStream(GZIPOutputStream(FileOutputStream(destFile))).use {
             it.writeObject(videoHash)
@@ -230,11 +235,11 @@ abstract class MediaIO {
      * @param destFile 辞書ファイルの場所
      * @param 辞書データ
      */
-    fun loadHashMap(destFile: File): HashMap<Long, MutableList<String>>? {
+    fun loadHashMap(destFile: File): HashMap<Long, MutableList<HashInfo>>? {
         if (!destFile.exists() || destFile.isDirectory || !destFile.isFile) return null
-        var videoHash = HashMap<Long, MutableList<String>>(4000000, 1.0F) //初期化用。後で書き換わる
+        var videoHash = HashMap<Long, MutableList<HashInfo>>(4000000, 1.0F) //初期化用。後で書き換わる
         ObjectInputStream(GZIPInputStream(FileInputStream(destFile))).use {
-            videoHash = it.readObject() as HashMap<Long, MutableList<String>>
+            videoHash = it.readObject() as HashMap<Long, MutableList<HashInfo>>
         }
         removeDuplication(videoHash)
         return videoHash
@@ -274,7 +279,7 @@ abstract class MediaIO {
      * リスト内の重複排除をします。
      * @param videoHash 辞書データ
      */
-    private fun removeDuplication(videoHash: HashMap<Long, MutableList<String>>) {
+    private fun removeDuplication(videoHash: HashMap<Long, MutableList<HashInfo>>) {
         videoHash.forEach { key, list -> videoHash[key] = list.toHashSet().toMutableList() }
     }
 
@@ -283,12 +288,12 @@ abstract class MediaIO {
      * @param oldVideoHash マージ元　こちらは読み込まれるだけで編集されません
      * @param newVideoHash マージを行う辞書　こちらにマージ済みデータが入ります
      */
-    fun mergeVideoHash2NewVideoHash(oldVideoHash: HashMap<Long, MutableList<String>>, newVideoHash: HashMap<Long, MutableList<String>>) {
+    fun mergeVideoHash2NewVideoHash(oldVideoHash: HashMap<Long, MutableList<HashInfo>>, newVideoHash: HashMap<Long, MutableList<HashInfo>>) {
         oldVideoHash.forEach { oldKey, oldValue ->
             newVideoHash[oldKey] = if (newVideoHash[oldKey] == null) { //新しいデータにもし無かったら
                 oldValue
             } else {//既にあったらまとめて返す
-                var allList = mutableListOf<String>()
+                var allList = mutableListOf<HashInfo>()
                 allList.addAll(oldValue)
                 var newList = newVideoHash[oldKey] ?: mutableListOf() //nullは無いはずだが一応
                 allList.addAll(newList)
@@ -309,6 +314,16 @@ abstract class MediaIO {
     fun getTimeString(frame: Int, frameRate: Double): String {
         val sec = 1.0 / frameRate * frame
         return "${String.format("%02d", (sec / 60).toInt())}:${String.format("%02d", (sec % 60).toInt())}"
+    }
+
+    fun hashMap2List(hashMap: HashMap<Long, MutableList<HashInfo>>): ArrayList<Pair<Long, MutableList<HashInfo>>> {
+        var arrayList = ArrayList<Pair<Long, MutableList<HashInfo>>>() //順序つきリストに変更してみる
+        hashMap.forEach { key, value ->
+            arrayList.add(Pair(key, value))
+        }
+        arrayList.sortedWith(compareBy({ it.first })) //どうせ後からソートされるから。
+//        arrayList.binarySearch { compareValues(it.first, 1L) }
+        return arrayList
     }
 
     /**

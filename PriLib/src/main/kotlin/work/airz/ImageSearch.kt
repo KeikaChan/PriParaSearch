@@ -40,8 +40,8 @@ class ImageSearch {
      * @param videoHash 辞書データ
      * @return 似た画像のリスト List(titleId_storyId_frame)
      */
-    fun getSimilarImage(hash: Long, level: Int, videoHash: HashMap<Long, MutableList<String>>): List<String> {
-        var result: List<String> = if (level <= 3) {
+    fun getSimilarImage(hash: Long, level: Int, videoHash: HashMap<Long, MutableList<HashInfo>>): List<HashInfo> {
+        var result: List<HashInfo> = if (level <= 3) {
             getSimilarHash(hash, level, videoHash)
         } else {
             getSimilarHashB(hash, level, videoHash)
@@ -54,7 +54,7 @@ class ImageSearch {
      * @param sceneList 対象のシーン
      * @return scene
      */
-    private fun groupByScene(sceneList: List<String>): List<String> {
+    private fun groupByScene(sceneList: List<HashInfo>): List<HashInfo> {
         if (sceneList.isEmpty()) return listOf() //list の中身　titleId_storyId_frame
         //実装的にはタイトルIDやストーリーIDは0づめで数字があることが好ましいが、近接フレームを排除するだけなので気にしなくていい
         val sortedList = sceneList.sorted()
@@ -62,16 +62,7 @@ class ImageSearch {
         var resultList = mutableListOf(old) //最初は入れておく
 
         sortedList.forEach {
-            val oldSplitText = old.split("_")
-            val oldTitleId = oldSplitText[0].toInt()
-            val oldStoryId = oldSplitText[1].toInt()
-            val oldFrame = oldSplitText[1].toLong()
-
-            val newSplitText = it.split("_")
-            val newTitleId = newSplitText[0].toInt()
-            val newStoryId = newSplitText[1].toInt()
-            val newFrame = newSplitText[1].toLong()
-            if (newTitleId != oldTitleId || newStoryId != oldStoryId || newFrame - oldFrame > 100) resultList.add(it) //フレームに開きがあった時に入れる
+            if (it.titleId != old.titleId || it.storyId != old.storyId || it.frame - old.frame > 100) resultList.add(it) //フレームに開きがあった時に入れる
             old = it
         }
         return resultList
@@ -84,8 +75,8 @@ class ImageSearch {
      * @param videoHash 辞書データ
      * @return 似た画像のリスト List(titleId_storyId_frame)
      */
-    private fun getSimilarHashB(hash: Long, level: Int, videoHash: HashMap<Long, MutableList<String>>): List<String> {
-        var result = mutableListOf<String>()
+    private fun getSimilarHashB(hash: Long, level: Int, videoHash: HashMap<Long, MutableList<HashInfo>>): List<HashInfo> {
+        var result = mutableListOf<HashInfo>()
         videoHash.filter { populationCount(hash.xor(it.key)) <= level }.forEach { _, value ->
             result.addAll(value)
         }
@@ -114,9 +105,9 @@ class ImageSearch {
      * @param videoHash 辞書データ
      * @return 似た画像のリスト List(titleId_storyId_frame)
      */
-    private fun getSimilarHash(hash: Long, level: Int, videoHash: HashMap<Long, MutableList<String>>): List<String> {
-        var p: MutableList<String>?
-        var result = mutableListOf<String>()
+    private fun getSimilarHash(hash: Long, level: Int, videoHash: HashMap<Long, MutableList<HashInfo>>): List<HashInfo> {
+        var p: MutableList<HashInfo>?
+        var result = mutableListOf<HashInfo>()
 
         if (level >= 0) { //完全一致
             p = videoHash[hash]
