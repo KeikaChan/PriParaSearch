@@ -96,7 +96,6 @@ abstract class MediaIO {
     fun importJPG(rootDir: File): HashMap<Long, MutableList<HashInfo>> {
         var jpgFiles = recursiveSearch(rootDir).filter { file -> nameCheck(file, "jpg") }
         updateStatus("${jpgFiles.size} jpg files are found.")
-//   jpgFiles= jpgFiles.toMutableList().addAll(recursiveSearch(rootDir).filter { file -> nameCheck(file, "jpg") })
         var videoHash = HashMap<Long, MutableList<HashInfo>>(4000000, 1.0F)
         var count = 1
         jpgFiles.forEach { jpgFile ->
