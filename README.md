@@ -1,4 +1,5 @@
 # PriParaSearch
+### 現在α版です。仕様やDB形式が変わる可能性があります!!!
 ## 概要
 [Gochiusearch](https://github.com/ksasao/Gochiusearch)のプリパラ版です。  
 元のプログラムのアルゴリズムを踏襲しつつ機能削除/追加を行いました。  
