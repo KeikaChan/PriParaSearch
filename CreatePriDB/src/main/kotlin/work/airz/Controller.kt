@@ -111,7 +111,7 @@ class Controller : MediaIO() {
         if (mergeData.isSelected) {//データのマージ
             updateStatus("merging...")
             runBlocking {
-                var oldVideoHash = loadHashMap(File(VIDEO_HASH_PATH)) ?: listOf()
+                var oldVideoHash = loadHashList(File(VIDEO_HASH_PATH)) ?: listOf()
                 if (oldVideoHash.isEmpty()) {
                     updateStatus("old db file does not exist!")
                     return@runBlocking

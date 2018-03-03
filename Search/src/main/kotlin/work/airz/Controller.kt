@@ -14,7 +14,6 @@ import java.awt.image.BufferedImage
 import java.net.URL
 import java.util.*
 import javax.imageio.ImageIO
-import kotlin.math.sign
 import kotlin.system.measureTimeMillis
 
 
@@ -55,7 +54,7 @@ class Controller : MediaIO(), Initializable {
 
 
     private lateinit var stage: Stage
-    private var videoHashMap = listOf<Pair<Long,MutableList<HashInfo>>>()
+    private var videoHashList = listOf<Pair<Long,MutableList<HashInfo>>>()
     private var titleIndex = hashMapOf<String, Pair<Double, String>>()
     private val TITLE_INDEX_PATH = System.getProperty("user.dir") + File.separator + "index.txt"
     private lateinit var resourceBundle: ResourceBundle
@@ -71,7 +70,7 @@ class Controller : MediaIO(), Initializable {
     fun init(primaryStage: Stage) {
         stage = primaryStage
         process.selectionModel.select(2)
-        videoHashMap = loadHashMap(File(VIDEO_HASH_PATH)) ?: listOf<Pair<Long,MutableList<HashInfo>>>()
+        videoHashList = loadHashList(File(VIDEO_HASH_PATH)) ?: listOf<Pair<Long,MutableList<HashInfo>>>()
         logArea.isWrapText = true
         titleIndex = loadTitleIndex(File(TITLE_INDEX_PATH))
     }
@@ -82,7 +81,7 @@ class Controller : MediaIO(), Initializable {
     fun searchScene(image: BufferedImage, imageFilePath: String) {
         var result = listOf<HashInfo>()
         val time = measureTimeMillis {
-            result = ImageSearch().getSimilarImage(ImageSearch().getVector(image), process.value.toInt(), videoHashMap)
+            result = ImageSearch().getSimilarImage(ImageSearch().getVector(image), process.value.toInt(), videoHashList)
         }
         var display = "${resourceBundle.getString("key.searchedImage")}: ${imageFilePath}\n${resourceBundle.getString("key.searchTime")}: ${time} ms\n\n"
         val titles = index2TitlesWithSec(result)

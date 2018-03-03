@@ -161,7 +161,7 @@ abstract class MediaIO {
         var dbFiles = recursiveSearch(rootDir).filter { file -> file.extension.equals("db") }
         var videoHash = HashMap<Long, MutableList<HashInfo>>(4000000, 1.0F)
         dbFiles.forEach {
-            var oldHash = loadHashMap(it) ?: return@forEach
+            var oldHash = loadHashList(it) ?: return@forEach
             mergeVideoHash2NewVideoHash(list2HashMap(oldHash), videoHash)
         }
         return videoHash
@@ -234,7 +234,7 @@ abstract class MediaIO {
      * @param destFile 辞書ファイルの場所
      * @param 辞書データ
      */
-    fun loadHashMap(destFile: File): List<Pair<Long, MutableList<HashInfo>>>? {
+    fun loadHashList(destFile: File): List<Pair<Long, MutableList<HashInfo>>>? {
         if (!destFile.exists() || destFile.isDirectory || !destFile.isFile) return null
         var videoHash = listOf<Pair<Long, MutableList<HashInfo>>>() //初期化用。後で書き換わる
         ObjectInputStream(GZIPInputStream(FileInputStream(destFile))).use {
