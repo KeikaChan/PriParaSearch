@@ -33,6 +33,8 @@ sourceSets {
     main.resources.srcDirs = ['src/main/resources']
 }
 
+mainClassName = 'work.airz.MainKt'
+
 tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
 }
