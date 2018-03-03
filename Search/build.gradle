@@ -48,3 +48,10 @@ jfx {
     additionalBundlerResources = 'src/main/resources'
     vendor = 'Khrom'
 }
+
+//jar {
+//    manifest {
+//        attributes 'Main-Class': 'work.airz.MainKt'
+//    }
+//    from configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+//}

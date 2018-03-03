@@ -49,10 +49,3 @@ compileTestKotlin {
     kotlinOptions.jvmTarget = "1.8"
 }
 
-
-//jar {
-//    manifest {
-//        attributes 'Main-Class': 'work.airz.MainKt'
-//    }
-//    from configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
-//}
