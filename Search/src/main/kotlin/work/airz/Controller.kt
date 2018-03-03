@@ -55,7 +55,7 @@ class Controller : MediaIO(), Initializable {
 
 
     private lateinit var stage: Stage
-    private var videoHashMap = hashMapOf<Long, MutableList<String>>()
+    private var videoHashMap = listOf<Pair<Long,MutableList<HashInfo>>>()
     private var titleIndex = hashMapOf<String, Pair<Double, String>>()
     private val TITLE_INDEX_PATH = System.getProperty("user.dir") + File.separator + "index.txt"
     private lateinit var resourceBundle: ResourceBundle
@@ -71,7 +71,7 @@ class Controller : MediaIO(), Initializable {
     fun init(primaryStage: Stage) {
         stage = primaryStage
         process.selectionModel.select(2)
-        videoHashMap = loadHashMap(File(VIDEO_HASH_PATH)) ?: hashMapOf()
+        videoHashMap = loadHashMap(File(VIDEO_HASH_PATH)) ?: listOf<Pair<Long,MutableList<HashInfo>>>()
         logArea.isWrapText = true
         titleIndex = loadTitleIndex(File(TITLE_INDEX_PATH))
     }
@@ -80,7 +80,7 @@ class Controller : MediaIO(), Initializable {
      * 検索
      */
     fun searchScene(image: BufferedImage, imageFilePath: String) {
-        var result = listOf<String>()
+        var result = listOf<HashInfo>()
         val time = measureTimeMillis {
             result = ImageSearch().getSimilarImage(ImageSearch().getVector(image), process.value.toInt(), videoHashMap)
         }
@@ -98,13 +98,12 @@ class Controller : MediaIO(), Initializable {
      * 出力用の形式に変換します
      *
      */
-    fun index2TitlesWithSec(indexList: List<String>): List<String> {
+    fun index2TitlesWithSec(indexList: List<HashInfo>): List<String> {
         //titleId_storyId_frameのリスト
         var resultList = mutableListOf<String>()
         indexList.forEach {
-            val splittedText = it.split("_")
-            val tIDsID = "${splittedText[0]}_${splittedText[1]}"
-            val frame = splittedText[2].toInt()
+            val tIDsID = "${it.titleId}_${it.storyId}"
+            val frame = it.frame
             var (frameRate, title) = titleIndex[tIDsID] ?: return@forEach
             resultList.add("${title} ${getTimeString(frame, frameRate)}")
         }
@@ -120,7 +119,7 @@ class Controller : MediaIO(), Initializable {
         var rawIndex = index.readLines()
         rawIndex.forEach {
             val splittedText = it.split(",") //中身csvなので
-            val tIDsID = "${splittedText[0]}_${splittedText[1]}"
+            val tIDsID = "${splittedText[0].toByte()}_${splittedText[1].toShort()}"
             val frameRate = splittedText[2].toDouble()
             val title = splittedText[3]
             indexMap[tIDsID] = Pair(frameRate, title)
