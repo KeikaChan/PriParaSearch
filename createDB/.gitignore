@@ -7,7 +7,6 @@ libs
 *.bin
 *.mp4
 jpg
-csv
 
 # Ignore Gradle GUI config
 gradle-app.setting
