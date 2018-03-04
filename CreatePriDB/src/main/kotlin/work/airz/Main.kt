@@ -22,7 +22,7 @@ class Main : Application() {
         fxmlLoader.resources = ResourceBundle.getBundle("bundle/Controller")
 
         var root: Parent = fxmlLoader.load()
-        primaryStage!!.title = "PriParaCreator 1.1"
+        primaryStage!!.title = "PriParaCreator 1.3.1"
         var scene = Scene(root, MIN_SCREEN_WIDTH, MIN_SCREEN_HEIGHT)
         primaryStage.scene = scene
         primaryStage.minWidth = MIN_SCREEN_WIDTH
