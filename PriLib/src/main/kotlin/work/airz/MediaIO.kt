@@ -67,7 +67,7 @@ abstract class MediaIO {
              * 注意：動画とビデオのフレームを同時に扱っているのでフレーム数が同じことがある(動画は異なる)
              * →動画はカウンターを使って分ける
              */
-            var bmp = converter.convert(frameGrabber.grabImage()) ?: return //残りが画像フレームの時にnullになる
+            var bmp = converter.convert(frameGrabber.grabImage()) ?: continue
 
             var splittedText = input.nameWithoutExtension.split("_") //ファイル名が titleId_storyIdのため
             var hashInfo = HashInfo(splittedText[0].toByte(), splittedText[1].toShort(), count)
