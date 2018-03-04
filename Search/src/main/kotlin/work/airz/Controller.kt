@@ -1,5 +1,6 @@
 package work.airz
 
+import javafx.application.Platform
 import javafx.embed.swing.SwingFXUtils
 import javafx.event.ActionEvent
 import javafx.fxml.FXML
@@ -9,6 +10,7 @@ import javafx.scene.image.ImageView
 import javafx.scene.input.DragEvent
 import javafx.scene.input.TransferMode
 import javafx.stage.Stage
+import kotlinx.coroutines.experimental.async
 import java.io.File
 import java.awt.image.BufferedImage
 import java.net.URL
@@ -54,7 +56,7 @@ class Controller : MediaIO(), Initializable {
 
 
     private lateinit var stage: Stage
-    private var videoHashList = listOf<Pair<Long,MutableList<HashInfo>>>()
+    private var videoHashList = listOf<Pair<Long, ByteArray>>()
     private var titleIndex = hashMapOf<String, Pair<Double, String>>()
     private val TITLE_INDEX_PATH = System.getProperty("user.dir") + File.separator + "index.txt"
     private lateinit var resourceBundle: ResourceBundle
@@ -70,9 +72,17 @@ class Controller : MediaIO(), Initializable {
     fun init(primaryStage: Stage) {
         stage = primaryStage
         process.selectionModel.select(2)
-        videoHashList = loadHashList(File(VIDEO_HASH_PATH)) ?: listOf<Pair<Long,MutableList<HashInfo>>>()
         logArea.isWrapText = true
-        titleIndex = loadTitleIndex(File(TITLE_INDEX_PATH))
+        updateStatus(resourceBundle.getString("key.loading"))
+        async {
+            videoHashList = loadHashList(File(VIDEO_HASH_PATH)) ?: listOf<Pair<Long, ByteArray>>()
+            titleIndex = loadTitleIndex(File(TITLE_INDEX_PATH))
+            if (videoHashList.any() && titleIndex.any()) {
+                Platform.runLater { updateStatus(resourceBundle.getString("key.loaded")) }
+            } else {
+                Platform.runLater { updateStatus(resourceBundle.getString("key.loadError")) }
+            }
+        }
     }
 
     /**
@@ -129,8 +139,7 @@ class Controller : MediaIO(), Initializable {
     override fun updateStatus(log: String) {
         logArea.clear()
         logArea.text = "$log\n"
-        println(log)
-
+//        println(log)
     }
 
 

@@ -9,6 +9,7 @@ import java.util.*
 
 
 fun main(args: Array<String>) {
+    if (args.any()&&args.first().equals("pri")) Locale.setDefault(Locale("pri"))
     Application.launch(Main::class.java, *args)
 }
 

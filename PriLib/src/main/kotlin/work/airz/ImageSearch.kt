@@ -2,13 +2,12 @@ package work.airz
 
 
 import java.awt.image.BufferedImage
-import java.util.HashMap
 
 /**
  * 画像の探索関連をまとめています
  * @author khrom
  */
-class ImageSearch {
+class ImageSearch :MediaIO(){
 
     /**
      * ベクトル変換部分
@@ -40,7 +39,7 @@ class ImageSearch {
      * @param videoHash 辞書データ
      * @return 似た画像のリスト List(titleId_storyId_frame)
      */
-    fun getSimilarImage(hash: Long, level: Int, videoHash: List<Pair<Long, MutableList<HashInfo>>>): List<HashInfo> {
+    fun getSimilarImage(hash: Long, level: Int, videoHash: List<Pair<Long,ByteArray>>): List<HashInfo> {
         var result: List<HashInfo> = if (level <= 3) {
             getSimilarHash(hash, level, videoHash)
         } else {
@@ -75,10 +74,10 @@ class ImageSearch {
      * @param videoHash 辞書データ
      * @return 似た画像のリスト List(titleId_storyId_frame)
      */
-    private fun getSimilarHashB(hash: Long, level: Int, videoHash: List<Pair<Long, MutableList<HashInfo>>>): List<HashInfo> {
+    private fun getSimilarHashB(hash: Long, level: Int, videoHash: List<Pair<Long, ByteArray>>): List<HashInfo> {
         var result = mutableListOf<HashInfo>()
         videoHash.filter { populationCount(hash.xor(it.first)) <= level }.forEach { (_, value) ->
-            result.addAll(value)
+            result.addAll(serializedByteArray2Object(value) as MutableList<HashInfo>)
         }
         return result.toList()
     }
@@ -109,7 +108,7 @@ class ImageSearch {
      * @param videoHash 辞書データ
      * @return 似た画像のリスト List(titleId_storyId_frame)
      */
-    private fun getSimilarHash(hash: Long, level: Int, videoHash: List<Pair<Long, MutableList<HashInfo>>>): List<HashInfo> {
+    private fun getSimilarHash(hash: Long, level: Int, videoHash: List<Pair<Long, ByteArray>>): List<HashInfo> {
         var p: MutableList<HashInfo>?
         var result = mutableListOf<HashInfo>()
         if (level >= 0) { //完全一致
@@ -117,7 +116,7 @@ class ImageSearch {
             p = if (index < 0) {
                 null
             } else {
-                videoHash[index].second
+                serializedByteArray2Object(videoHash[index].second) as MutableList<HashInfo>
             }
             if (p != null && p.size > 0) {
                 result.addAll(p)
@@ -131,7 +130,7 @@ class ImageSearch {
                 p = if (index < 0) {
                     null
                 } else {
-                    videoHash[index].second
+                    serializedByteArray2Object(videoHash[index].second) as MutableList<HashInfo>
                 }
 
                 if (p != null && p.size > 0) {
@@ -147,7 +146,7 @@ class ImageSearch {
                     p = if (index < 0) {
                         null
                     } else {
-                        videoHash[index].second
+                        serializedByteArray2Object(videoHash[index].second) as MutableList<HashInfo>
                     }
 
                     if (p != null && p.size > 0) {
@@ -166,7 +165,7 @@ class ImageSearch {
                         p = if (index < 0) {
                             null
                         } else {
-                            videoHash[index].second
+                            serializedByteArray2Object(videoHash[index].second) as MutableList<HashInfo>
                         }
 
                         if (p != null && p.size > 0) {
@@ -187,7 +186,7 @@ class ImageSearch {
                             p = if (index < 0) {
                                 null
                             } else {
-                                videoHash[index].second
+                                serializedByteArray2Object(videoHash[index].second) as MutableList<HashInfo>
                             }
 
                             if (p != null && p.size > 0) {
@@ -248,4 +247,7 @@ class ImageSearch {
         return result
     }
 
+    override fun updateStatus(log: String) {
+        // do nothing
+    }
 }

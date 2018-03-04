@@ -162,6 +162,7 @@ abstract class MediaIO {
         var videoHash = HashMap<Long, MutableList<HashInfo>>(4000000, 1.0F)
         dbFiles.forEach {
             var oldHash = loadHashList(it) ?: return@forEach
+
             mergeVideoHash2NewVideoHash(list2HashMap(oldHash), videoHash)
         }
         return videoHash
@@ -224,8 +225,15 @@ abstract class MediaIO {
      */
     fun saveHashMap(destFile: File, videoHash: HashMap<Long, MutableList<HashInfo>>) {
         destFile.parentFile.mkdirs()
-        ObjectOutputStream(GZIPOutputStream(FileOutputStream(File(destFile.absolutePath)))).use {
-            it.writeObject(hashMap2List(videoHash))
+        ObjectOutputStream(GZIPOutputStream(FileOutputStream(destFile))).use {
+            var keys = ArrayList<Long>(videoHash.size)
+            var values = ArrayList<ByteArray>(videoHash.size) //最後にserializeする
+            hashMap2List(videoHash).forEach { (key, value) ->
+                keys.add(key)
+                values.add(serializeObject2ByteArray(value))
+            }
+            it.writeObject(keys) //バラバラに書き込んだときが現状一番容量が減らせる
+            it.writeObject(values)
         }
     }
 
@@ -234,13 +242,19 @@ abstract class MediaIO {
      * @param destFile 辞書ファイルの場所
      * @param 辞書データ
      */
-    fun loadHashList(destFile: File): List<Pair<Long, MutableList<HashInfo>>>? {
+    fun loadHashList(destFile: File): List<Pair<Long, ByteArray>>? {
         if (!destFile.exists() || destFile.isDirectory || !destFile.isFile) return null
-        var videoHash = listOf<Pair<Long, MutableList<HashInfo>>>() //初期化用。後で書き換わる
+        var keys = ArrayList<Long>()
+        var values = ArrayList<ByteArray>()
         ObjectInputStream(GZIPInputStream(FileInputStream(destFile))).use {
-            videoHash = it.readObject() as List<Pair<Long, MutableList<HashInfo>>>
+            keys = it.readObject() as ArrayList<Long>
+            values = it.readObject() as ArrayList<ByteArray>
         }
-        return videoHash
+        var result = ArrayList<Pair<Long, ByteArray>>(keys.size)
+        for (index in 0 until keys.size) {
+            result.add(Pair(keys[index], values[index]))
+        }
+        return result
     }
 
     /**
@@ -320,11 +334,11 @@ abstract class MediaIO {
      * @param hashMap 辞書データ
      */
     fun hashMap2List(hashMap: HashMap<Long, MutableList<HashInfo>>): List<Pair<Long, MutableList<HashInfo>>> {
-        var arrayList = ArrayList<Pair<Long, MutableList<HashInfo>>>() //順序つきリストに変更してみる
+        var arrayList = ArrayList<Pair<Long, MutableList<HashInfo>>>(hashMap.size)
         hashMap.forEach { key, value ->
             arrayList.add(Pair(key, value))
         }
-        var sortedList = arrayList.sortedWith(compareBy({ it.first })) //どうせ後からソートされるから。
+        var sortedList = arrayList.sortedWith(compareBy({ it.first }))
         return sortedList
     }
 
@@ -333,16 +347,42 @@ abstract class MediaIO {
      * リストをHashMapに変換します。
      * @param hashList list型の辞書データ
      */
-    fun list2HashMap(hashList: List<Pair<Long, MutableList<HashInfo>>>): HashMap<Long, MutableList<HashInfo>> {
+    fun list2HashMap(hashList: List<Pair<Long, ByteArray>>): HashMap<Long, MutableList<HashInfo>> {
         var videoHash = HashMap<Long, MutableList<HashInfo>>(4000000, 1.0F)
         hashList.forEach { (long, list) ->
-            videoHash[long] = list
+            videoHash[long] = serializedByteArray2Object(list) as MutableList<HashInfo>
         }
         return videoHash
     }
 
     /**
-     * ログ出力用です
+     * 最後にデータを読み込むときまで必要ないのでシリアライズ化をする
+     * gzip圧縮は保存時に別で行います。
+     * @param objectData データ
+     * @return 圧縮済みデータ
+     */
+    fun serializeObject2ByteArray(objectData: Any): ByteArray {
+        var byteArrayOutputStream = ByteArrayOutputStream()
+        ObjectOutputStream(byteArrayOutputStream).use {
+            it.writeObject(objectData)
+        }
+        return byteArrayOutputStream.toByteArray()
+    }
+
+    /**
+     * シリアライズ化したデータを復元します
+     * @param byteArray シリアライズ化されたデータ
+     */
+    fun serializedByteArray2Object(byteArray: ByteArray): Any {
+        var result = Any()
+        ObjectInputStream(ByteArrayInputStream(byteArray)).use {
+            result = it.readObject()
+        }
+        return result
+    }
+
+    /**
+     * ログ出力用
      * @param log 出力したい内容
      */
     abstract fun updateStatus(log: String)
