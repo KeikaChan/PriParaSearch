@@ -65,7 +65,7 @@ Windows/Macでしか試していませんが、コードとしてはLinuxでも�
 
 |検索画面|DB作成画面|
 |---|---|
-|![search](https://user-images.githubusercontent.com/4639391/36906603-b1f15f3a-1e79-11e8-86d6-e5049916e351.jpg)|![image](https://user-images.githubusercontent.com/4639391/36906453-500b75b2-1e79-11e8-9dbd-6eb689c54836.jpg)
+|![screenshot 2018-03-04 14 46 07](https://user-images.githubusercontent.com/4639391/36942751-c668acee-1fbd-11e8-865b-a51f45354a4f.jpg)|![image](https://user-images.githubusercontent.com/4639391/36906453-500b75b2-1e79-11e8-9dbd-6eb689c54836.jpg)
 
 ## 雑感
 友達がアニメプリパラの字幕付きスクショで会話するんですよ。そんなのプリパラ初心者の筆者には到底ついていけないです。  
